@@ -1,0 +1,25 @@
+Assignment 1
+
+Name:		Tengyu Cai
+Student #: 	20494373
+Student id: t7cai
+
+The final executable was compiled on machine gl33
+
+# Compilation
+Run the following commands to compile the program:
+	$ premake4 gmake
+	$ make
+
+Run the following command to invoke the program:
+	$ ./A1
+
+
+# Manual
+Meets all objective listed in the assignment description.
+
+I've made one assumption: if the active cell move from a empty cell to a cell with a bar, the current colour will be changed to the colour of that bar.
+
+Extra features are as followed:
+	N/A
+

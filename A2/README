@@ -1,0 +1,37 @@
+Assignment 2
+
+Name:		Tengyu Cai
+Student #: 	20494373
+Student id: t7cai
+
+The final executable was compiled on machine gl33
+
+# Compilation
+Run the following commands to compile the program:
+	$ premake4 gmake
+	$ make
+
+Run the following command to invoke the program:
+	$ ./A2
+
+
+# Manual
+Meets all objective listed in the assignment description.
+
+The point of view is 10.0 units alone the Z axis of the model coordinate.
+I assume that the near plane is at least 0.1 and the far plane is at least the distance of near (plane + 0.1).
+By default, the distance of near plane is 7.5 while the far plane is 12.5.
+
+Colours of Model gnomon:
+x-coord: Pink
+y-coord: Light blue
+z-coord: Yellow
+
+Colours of World gnomon:
+x-coord: Blue
+y-coord: Green
+z-coord: Red
+
+Extra features are as followed:
+	N/A
+
