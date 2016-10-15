@@ -327,11 +327,63 @@ void A3::guiLogic()
 
 
 		// Add more gui elements here here ...
-
+		if ( ImGui::BeginMainMenuBar() ) {
+			if ( ImGui::BeginMenu( "Application" ) ) {
+				if ( ImGui::MenuItem( "Reset Position", "I" ) ) {
+				}
+			
+				if ( ImGui::MenuItem( "Reset Orientation", "O" ) ) {
+				}
+			
+				if ( ImGui::MenuItem( "Reset Joints", "N" ) ) {
+				}
+			
+				if ( ImGui::MenuItem( "Reset All", "A" ) ) {
+				}
+			
+				if ( ImGui::MenuItem( "Quit", "Q" ) ) {
+					glfwSetWindowShouldClose(m_window, GL_TRUE);
+				}
+			
+				ImGui::EndMenu();
+			}
+		
+			if ( ImGui::BeginMenu( "Edit" ) ) {
+				if ( ImGui::MenuItem( "Undo", "U" ) ) {
+				}
+			
+				if ( ImGui::MenuItem( "Redo", "R" ) ) {
+				}
+			
+				ImGui::EndMenu();
+			}
+		
+			if ( ImGui::BeginMenu( "Options" ) ) {
+				if ( ImGui::MenuItem( "Circle", "C" ) ) {
+				}
+			
+				if ( ImGui::MenuItem( "Z-buffer", "Z" ) ) {
+				}
+		
+				if ( ImGui::MenuItem( "Backface culling", "B" ) ) {			
+				}
+			
+				if ( ImGui::MenuItem( "Frontface culling", "F" ) ) {
+				}
+			
+				ImGui::EndMenu();
+			}
+			ImGui::EndMainMenuBar();
+		}
 
 		// Create Button, and check if it was clicked:
-		if( ImGui::Button( "Quit Application" ) ) {
-			glfwSetWindowShouldClose(m_window, GL_TRUE);
+		//if( ImGui::Button( "Quit Application" ) ) {
+		//	glfwSetWindowShouldClose(m_window, GL_TRUE);
+		//}
+		if ( ImGui::RadioButton( "Position/Orientation (P)", true ) ) {
+		}
+		
+		if ( ImGui::RadioButton( "Joints (J)", false ) ) {
 		}
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
