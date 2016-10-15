@@ -13,6 +13,8 @@ using namespace std;
 #include <glm/gtx/io.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <deque>
+
 using namespace glm;
 
 static bool show_gui = true;
@@ -463,26 +465,34 @@ void A3::renderSceneGraph(const SceneNode & root) {
 	// You can do that by putting a method in SceneNode, overridden in its
 	// subclasses, that renders the subtree rooted at every node.  Or you
 	// could put a set of mutually recursive functions in this class, which
-	// walk down the tree from nodes of different types.
+	// walk down the tree from nodes of different types
 
-	for (const SceneNode * node : root.children) {
+	deque<mat4> transform_stack;
 
-		if (node->m_nodeType != NodeType::GeometryNode)
-			continue;
+	mat4 prev_trans = m_rootNode->get_transform();
 
-		const GeometryNode * geometryNode = static_cast<const GeometryNode *>(node);
+	root.renderSceneNode(m_shader, m_view, m_batchInfoMap, transform_stack);
 
-		updateShaderUniforms(m_shader, *geometryNode, m_view);
+	m_rootNode->set_transform(prev_trans);
+
+	// for (const SceneNode * node : root.children) {
+
+	// 	if (node->m_nodeType != NodeType::GeometryNode)
+	// 		continue;
+
+	// 	const GeometryNode * geometryNode = static_cast<const GeometryNode *>(node);
+
+	// 	updateShaderUniforms(m_shader, *geometryNode, m_view);
 
 
-		// Get the BatchInfo corresponding to the GeometryNode's unique MeshId.
-		BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
+	// 	// Get the BatchInfo corresponding to the GeometryNode's unique MeshId.
+	// 	BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
 
-		//-- Now render the mesh:
-		m_shader.enable();
-		glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
-		m_shader.disable();
-	}
+	// 	//-- Now render the mesh:
+	// 	m_shader.enable();
+	// 	glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+	// 	m_shader.disable();
+	// }
 
 	glBindVertexArray(0);
 	CHECK_GL_ERRORS;

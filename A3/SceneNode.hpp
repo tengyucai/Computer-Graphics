@@ -7,6 +7,12 @@
 #include <list>
 #include <string>
 #include <iostream>
+#include <deque>
+
+#include "cs488-framework/CS488Window.hpp"
+#include "cs488-framework/OpenGLImport.hpp"
+#include "cs488-framework/ShaderProgram.hpp"
+#include "cs488-framework/MeshConsolidator.hpp"
 
 enum class NodeType {
 	SceneNode,
@@ -57,4 +63,8 @@ public:
 private:
 	// The number of SceneNode instances.
 	static unsigned int nodeInstanceCount;
+
+public:
+    virtual void renderSceneNode(const ShaderProgram & shader, const glm::mat4 & viewMatrix, BatchInfoMap & m_batchInfoMap, std::deque<glm::mat4> & stack) const;
+
 };
