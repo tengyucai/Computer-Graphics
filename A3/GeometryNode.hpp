@@ -14,4 +14,7 @@ public:
 	// Mesh Identifier. This must correspond to an object name of
 	// a loaded .obj file.
 	std::string meshId;
+
+	void renderSceneNode(const ShaderProgram & shader, const glm::mat4 & viewMatrix, BatchInfoMap & m_batchInfoMap, std::deque<glm::mat4> & stack) const;
+	void updateShaderUniforms(const ShaderProgram & shader, const glm::mat4 & viewMatrix, std::deque<glm::mat4> & stack) const;
 };

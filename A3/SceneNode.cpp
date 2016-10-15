@@ -133,3 +133,18 @@ std::ostream & operator << (std::ostream & os, const SceneNode & node) {
 
 	return os;
 }
+
+void SceneNode::renderSceneNode(
+	const ShaderProgram & shader, 
+	const glm::mat4 & viewMatrix, 
+	BatchInfoMap & m_batchInfoMap,
+	std::deque<glm::mat4> & stack) const {
+
+	stack.push_back(trans);
+
+	for (const SceneNode *node : this->children) {
+		node->renderSceneNode(shader, viewMatrix, m_batchInfoMap, stack);
+	}
+
+	stack.pop_back();
+}
