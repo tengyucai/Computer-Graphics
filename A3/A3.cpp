@@ -21,6 +21,10 @@ static bool show_gui = true;
 
 const size_t CIRCLE_PTS = 48;
 
+static const int LEFT_MOUSE = 0;
+static const int RIGHT_MOUSE = 1;
+static const int MIDDLE_MOUSE = 2;
+
 //----------------------------------------------------------------------------------------
 // Constructor
 A3::A3(const std::string & luaSceneFile)
@@ -49,6 +53,17 @@ A3::~A3()
  */
 void A3::init()
 {
+	// Init variables
+	cur_mode = POSITION_ORIENTATION;
+	enable_circle = false;
+	enable_z_buffer = true;
+	enable_backface_culling = false;
+	enable_frontface_culling = false;
+	//mouse_x_position = 0.0;
+	//mouse_y_position = 0.0
+	translation = mat4();
+	rotation = mat4();
+	
 	// Set the background colour.
 	glClearColor(0.35, 0.35, 0.35, 1.0);
 
@@ -84,7 +99,6 @@ void A3::init()
 	initViewMatrix();
 
 	initLightSources();
-
 
 	// Exiting the current scope calls delete automatically on meshConsolidator freeing
 	// all vertex data resources.  This is fine since we already copied this data to
@@ -263,6 +277,24 @@ void A3::initLightSources() {
 	m_light.rgbIntensity = vec3(0.8f); // White light
 }
 
+void A3::resetPosition() {
+	translation = mat4();
+}
+
+void A3::resetOrientation() {
+	rotation = mat4();
+}
+
+void A3::resetJoints() {
+
+}
+
+void A3::resetAll() {
+	resetPosition();
+	resetOrientation();
+	resetJoints();
+}
+
 //----------------------------------------------------------------------------------------
 void A3::uploadCommonSceneUniforms() {
 	m_shader.enable();
@@ -332,15 +364,19 @@ void A3::guiLogic()
 		if ( ImGui::BeginMainMenuBar() ) {
 			if ( ImGui::BeginMenu( "Application" ) ) {
 				if ( ImGui::MenuItem( "Reset Position", "I" ) ) {
+					resetPosition();
 				}
 			
 				if ( ImGui::MenuItem( "Reset Orientation", "O" ) ) {
+					resetOrientation();
 				}
 			
 				if ( ImGui::MenuItem( "Reset Joints", "N" ) ) {
+					resetJoints();
 				}
 			
 				if ( ImGui::MenuItem( "Reset All", "A" ) ) {
+					resetAll();
 				}
 			
 				if ( ImGui::MenuItem( "Quit", "Q" ) ) {
@@ -361,16 +397,16 @@ void A3::guiLogic()
 			}
 		
 			if ( ImGui::BeginMenu( "Options" ) ) {
-				if ( ImGui::MenuItem( "Circle", "C" ) ) {
+				if ( ImGui::Checkbox( "Circle            (C)", &enable_circle ) ) {
 				}
 			
-				if ( ImGui::MenuItem( "Z-buffer", "Z" ) ) {
+				if ( ImGui::Checkbox( "Z-buffer          (Z)", &enable_z_buffer ) ) {
 				}
 		
-				if ( ImGui::MenuItem( "Backface culling", "B" ) ) {			
+				if ( ImGui::Checkbox( "Backface culling  (B)", &enable_backface_culling ) ) {			
 				}
 			
-				if ( ImGui::MenuItem( "Frontface culling", "F" ) ) {
+				if ( ImGui::Checkbox( "Frontface culling (F)", &enable_frontface_culling ) ) {
 				}
 			
 				ImGui::EndMenu();
@@ -382,10 +418,12 @@ void A3::guiLogic()
 		//if( ImGui::Button( "Quit Application" ) ) {
 		//	glfwSetWindowShouldClose(m_window, GL_TRUE);
 		//}
-		if ( ImGui::RadioButton( "Position/Orientation (P)", true ) ) {
+		if ( ImGui::RadioButton( "Position/Orientation (P)", cur_mode == POSITION_ORIENTATION ) ) {
+			cur_mode = POSITION_ORIENTATION;
 		}
 		
-		if ( ImGui::RadioButton( "Joints (J)", false ) ) {
+		if ( ImGui::RadioButton( "Joints (J)", cur_mode == JOINTS ) ) {
+			cur_mode = JOINTS;
 		}
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
@@ -440,12 +478,25 @@ static void updateShaderUniforms(
  */
 void A3::draw() {
 
-	glEnable( GL_DEPTH_TEST );
+	if (enable_z_buffer) glEnable( GL_DEPTH_TEST );
+	
+	if (enable_backface_culling || enable_frontface_culling) {
+		glEnable(GL_CULL_FACE);
+		if (enable_backface_culling && enable_frontface_culling) {
+			glCullFace(GL_FRONT_AND_BACK);
+		} else if (enable_backface_culling) {
+			glCullFace(GL_BACK);
+		} else {
+			glCullFace(GL_FRONT);
+		}
+	} else {
+		glDisable(GL_CULL_FACE);
+	}
+	
 	renderSceneGraph(*m_rootNode);
 
-
-	glDisable( GL_DEPTH_TEST );
-	renderArcCircle();
+	if (enable_z_buffer) glDisable( GL_DEPTH_TEST );
+	if (enable_circle) renderArcCircle();
 }
 
 //----------------------------------------------------------------------------------------
@@ -470,6 +521,8 @@ void A3::renderSceneGraph(const SceneNode & root) {
 	deque<mat4> transform_stack;
 
 	mat4 prev_trans = m_rootNode->get_transform();
+	
+	m_rootNode->set_transform(translation * m_rootNode->get_transform() * rotation);
 
 	root.renderSceneNode(m_shader, m_view, m_batchInfoMap, transform_stack);
 
@@ -520,6 +573,26 @@ void A3::renderArcCircle() {
 	CHECK_GL_ERRORS;
 }
 
+vec3 A3::getArcballVector(double x, double y) {
+	vec3 P = vec3(x / m_framebufferWidth * 2 - 1.0, -(y / m_framebufferHeight * 2 - 1.0), 0.0f);
+	float OP_squared = P.x * P.x + P.y * P.y;
+	if (OP_squared <= 1*1) {
+		P.z = sqrt(1*1 - OP_squared);
+	} else {
+		P = normalize(P);
+	}
+	return P;
+}
+
+mat4 A3::getArcballRotationMatrix(double prev_x, double prev_y, double cur_x, double cur_y) {
+	vec3 S = getArcballVector(prev_x, prev_y);
+	vec3 T = getArcballVector(cur_x, cur_y);
+	float angle = acos(std::min(1.0f, dot(S, T))) / 10;
+	vec3 axis_in_camera_coord = cross(S, T);
+	vec4 axis_in_world_coord = inverse(m_view) * vec4(axis_in_camera_coord.x, axis_in_camera_coord.y, axis_in_camera_coord.z, 0);
+	return rotate(rotation, degrees(angle), vec3(axis_in_world_coord.x, axis_in_world_coord.y, axis_in_world_coord.z));
+}
+
 //----------------------------------------------------------------------------------------
 /*
  * Called once, after program is signaled to terminate.
@@ -554,6 +627,29 @@ bool A3::mouseMoveEvent (
 	bool eventHandled(false);
 
 	// Fill in with event handling code...
+	if (!ImGui::IsMouseHoveringAnyWindow()) {
+		float x_diff = xPos - mouse_x_position;
+		float y_diff = yPos - mouse_y_position;
+
+		if (cur_mode == POSITION_ORIENTATION) {
+			if (ImGui::IsMouseDown(LEFT_MOUSE)) {
+				translation = translate(translation, vec3( x_diff / 100, -y_diff / 100, 0.0f ));
+				//m_rootNode->translate(vec3( x_diff / 100, -y_diff / 100, 0.0f ));
+			}
+			if (ImGui::IsMouseDown(RIGHT_MOUSE)) {
+				rotation = getArcballRotationMatrix(mouse_x_position, mouse_y_position, xPos, yPos);
+			}
+			if (ImGui::IsMouseDown(MIDDLE_MOUSE)) {
+				translation = translate(translation, vec3( 0.0f, 0.0f, y_diff / 100 ));
+				//m_rootNode->translate(vec3( 0.0f, 0.0f, y_diff / 100 ));
+			}
+		} else if (cur_mode == JOINTS) {
+		
+		}
+		
+		mouse_x_position = xPos;
+		mouse_y_position = yPos;
+	}
 
 	return eventHandled;
 }
@@ -617,6 +713,29 @@ bool A3::keyInputEvent (
 		if( key == GLFW_KEY_M ) {
 			show_gui = !show_gui;
 			eventHandled = true;
+		} else if ( key == GLFW_KEY_Q ) {
+			glfwSetWindowShouldClose(m_window, GL_TRUE);
+		} else if ( key == GLFW_KEY_P ) {
+			cur_mode = POSITION_ORIENTATION;
+			eventHandled = true;
+		} else if ( key == GLFW_KEY_J ) {
+			cur_mode = JOINTS;
+		} else if ( key == GLFW_KEY_I ) {
+			resetPosition();
+		} else if ( key == GLFW_KEY_O ) {
+			resetOrientation();
+		} else if ( key == GLFW_KEY_N ) {
+			resetJoints();
+		} else if ( key == GLFW_KEY_A ) {
+			resetAll();
+		} else if ( key == GLFW_KEY_C ) {
+			enable_circle = !enable_circle;
+		} else if ( key == GLFW_KEY_Z ) {
+			enable_z_buffer = !enable_z_buffer;
+		} else if ( key == GLFW_KEY_B ) {
+			enable_backface_culling = !enable_backface_culling;
+		} else if ( key == GLFW_KEY_F ) {
+			enable_frontface_culling = !enable_frontface_culling;
 		}
 	}
 	// Fill in with event handling code...

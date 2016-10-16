@@ -15,6 +15,10 @@ struct LightSource {
 	glm::vec3 rgbIntensity;
 };
 
+enum InteractionMode {
+	POSITION_ORIENTATION,
+	JOINTS,
+};
 
 class A3 : public CS488Window {
 public:
@@ -77,4 +81,25 @@ protected:
 	std::string m_luaSceneFile;
 
 	std::shared_ptr<SceneNode> m_rootNode;
+	
+private:
+	glm::vec3 getArcballVector(double x, double y);
+	glm::mat4 getArcballRotationMatrix(double prev_x, double prev_y, double cur_x, double cur_y);
+	
+	void resetPosition();
+	void resetOrientation();
+	void resetJoints();
+	void resetAll();
+	
+	InteractionMode cur_mode;
+	bool enable_circle;
+	bool enable_z_buffer;
+	bool enable_backface_culling;
+	bool enable_frontface_culling;
+	
+	double mouse_x_position;
+	double mouse_y_position;
+	
+	glm::mat4 translation;
+	glm::mat4 rotation;	
 };
