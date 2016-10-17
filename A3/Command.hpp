@@ -7,10 +7,9 @@
 class Command {
 public:
 	Command(std::set<JointNode *> nodes, float angle);
-	~Command() {};
+	~Command();
 	void execute();
 	void undo();
 	float angle;
-	float prev_angle;
 	std::set<JointNode *> nodes;
 };

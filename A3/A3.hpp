@@ -95,6 +95,9 @@ private:
 	void resetJoints();
 	void resetAll();
 
+	void undo();
+	void redo();
+
 	SceneNode *getNodeById(SceneNode *root, unsigned int id);
 	SceneNode *getParentById(SceneNode *root, unsigned int id);
 

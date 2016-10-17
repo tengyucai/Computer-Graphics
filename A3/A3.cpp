@@ -394,9 +394,11 @@ void A3::guiLogic()
 		
 			if ( ImGui::BeginMenu( "Edit" ) ) {
 				if ( ImGui::MenuItem( "Undo", "U" ) ) {
+					undo();
 				}
 			
 				if ( ImGui::MenuItem( "Redo", "R" ) ) {
+					redo();
 				}
 			
 				ImGui::EndMenu();
@@ -617,6 +619,22 @@ SceneNode* A3::getParentById(SceneNode *root, unsigned int id) {
 	return NULL;
 }
 
+void A3::undo() {
+	cout << "Undo" << endl;
+	if (!undo_stack.empty()) {
+		Command *undo_cmd = undo_stack.top();
+		undo_stack.pop();
+		redo_stack.push(undo_cmd);
+		undo_cmd->undo();
+	} else {
+		cout << "undo stack empty!" << endl;
+	}
+}
+
+void A3::redo() {
+
+}
+
 //----------------------------------------------------------------------------------------
 /*
  * Called once, after program is signaled to terminate.
@@ -668,19 +686,11 @@ bool A3::mouseMoveEvent (
 				//m_rootNode->translate(vec3( 0.0f, 0.0f, y_diff / 100 ));
 			}
 		} else if (cur_mode == JOINTS) {
-			if (ImGui::IsMouseDown(MIDDLE_MOUSE)) {
-				// for (auto node : selected_nodes) {
-				// 	if (node->m_joint_x.min == node->m_joint_x.max) { // y-axis
-				// 		node->rotate('y', y_diff);
-				// 	} else { // x-axis
-				// 		node->rotate('x', y_diff);
-				// 	}
-				// }
-				// if (!undo_stack.empty()) {
-				// 	Command *cur_cmd = undo_stack.top();
-				// 	cur_cmd->angle += y_diff;
-				// 	cur_cmd->execute();
-				// }
+			if (ImGui::IsMouseDown(RIGHT_MOUSE)) {
+				cout << "rotate " << y_diff / 10 << endl;
+				Command *cur_cmd = undo_stack.top();
+				cur_cmd->angle = y_diff;
+				cur_cmd->execute();
 			}
 		}
 		
@@ -749,10 +759,10 @@ bool A3::mouseButtonInputEvent (
 			do_picking = false;
 
 			CHECK_GL_ERRORS;
-		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+		} else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
 			if (actions == GLFW_PRESS) {
-				// Command *new_cmd = new Command(selected_nodes, 0.0f);
-				// undo_stack.push(new_cmd);
+				Command *new_cmd = new Command(selected_nodes, 0.0f);
+				undo_stack.push(new_cmd);
 			} else if (actions == GLFW_RELEASE) {
 				while (!redo_stack.empty()) redo_stack.pop();
 			}
@@ -828,6 +838,10 @@ bool A3::keyInputEvent (
 			enable_backface_culling = !enable_backface_culling;
 		} else if ( key == GLFW_KEY_F ) {
 			enable_frontface_culling = !enable_frontface_culling;
+		} else if ( key == GLFW_KEY_U ) {
+			undo();
+		} else if ( key == GLFW_KEY_R ) {
+			redo();
 		}
 	}
 	// Fill in with event handling code...
