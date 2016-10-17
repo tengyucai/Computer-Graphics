@@ -65,6 +65,7 @@ private:
 	static unsigned int nodeInstanceCount;
 
 public:
-    virtual void renderSceneNode(const ShaderProgram & shader, const glm::mat4 & viewMatrix, BatchInfoMap & m_batchInfoMap, std::deque<glm::mat4> & stack) const;
+    virtual void renderSceneNode(const ShaderProgram & shader, const glm::mat4 & viewMatrix, 
+        BatchInfoMap & m_batchInfoMap, std::deque<glm::mat4> & stack, glm::mat4 T, bool do_picking) const;
 
 };

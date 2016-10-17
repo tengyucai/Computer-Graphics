@@ -138,12 +138,14 @@ void SceneNode::renderSceneNode(
 	const ShaderProgram & shader, 
 	const glm::mat4 & viewMatrix, 
 	BatchInfoMap & m_batchInfoMap,
-	std::deque<glm::mat4> & stack) const {
+	std::deque<glm::mat4> & stack,
+	glm::mat4 T,
+	bool do_picking) const {
 
 	stack.push_back(trans);
 
 	for (const SceneNode *node : this->children) {
-		node->renderSceneNode(shader, viewMatrix, m_batchInfoMap, stack);
+		node->renderSceneNode(shader, viewMatrix, m_batchInfoMap, stack, T, do_picking);
 	}
 
 	stack.pop_back();

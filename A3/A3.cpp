@@ -100,6 +100,8 @@ void A3::init()
 
 	initLightSources();
 
+	do_picking = false;
+
 	// Exiting the current scope calls delete automatically on meshConsolidator freeing
 	// all vertex data resources.  This is fine since we already copied this data to
 	// VBOs on the GPU.  We have no use for storing vertex data on the CPU side beyond
@@ -304,22 +306,26 @@ void A3::uploadCommonSceneUniforms() {
 		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(m_perpsective));
 		CHECK_GL_ERRORS;
 
+		location = m_shader.getUniformLocation("picking");
+		glUniform1i( location, do_picking ? 1 : 0 );
 
 		//-- Set LightSource uniform for the scene:
-		{
-			location = m_shader.getUniformLocation("light.position");
-			glUniform3fv(location, 1, value_ptr(m_light.position));
-			location = m_shader.getUniformLocation("light.rgbIntensity");
-			glUniform3fv(location, 1, value_ptr(m_light.rgbIntensity));
-			CHECK_GL_ERRORS;
-		}
+		if ( !do_picking ) {
+			{
+				location = m_shader.getUniformLocation("light.position");
+				glUniform3fv(location, 1, value_ptr(m_light.position));
+				location = m_shader.getUniformLocation("light.rgbIntensity");
+				glUniform3fv(location, 1, value_ptr(m_light.rgbIntensity));
+				CHECK_GL_ERRORS;
+			}
 
-		//-- Set background light ambient intensity
-		{
-			location = m_shader.getUniformLocation("ambientIntensity");
-			vec3 ambientIntensity(0.05f);
-			glUniform3fv(location, 1, value_ptr(ambientIntensity));
-			CHECK_GL_ERRORS;
+			//-- Set background light ambient intensity
+			{
+				location = m_shader.getUniformLocation("ambientIntensity");
+				vec3 ambientIntensity(0.05f);
+				glUniform3fv(location, 1, value_ptr(ambientIntensity));
+				CHECK_GL_ERRORS;
+			}
 		}
 	}
 	m_shader.disable();
@@ -524,7 +530,7 @@ void A3::renderSceneGraph(const SceneNode & root) {
 	
 	m_rootNode->set_transform(translation * m_rootNode->get_transform() * rotation);
 
-	root.renderSceneNode(m_shader, m_view, m_batchInfoMap, transform_stack);
+	root.renderSceneNode(m_shader, m_view, m_batchInfoMap, transform_stack, m_rootNode->get_transform(), do_picking);
 
 	m_rootNode->set_transform(prev_trans);
 
@@ -593,6 +599,24 @@ mat4 A3::getArcballRotationMatrix(double prev_x, double prev_y, double cur_x, do
 	return rotate(rotation, degrees(angle), vec3(axis_in_world_coord.x, axis_in_world_coord.y, axis_in_world_coord.z));
 }
 
+SceneNode* A3::getNodeById(SceneNode *root, unsigned int id) {
+	if (root->m_nodeId == id) return root;
+	for (SceneNode *child : root->children) {
+		SceneNode *tmp = getNodeById(child, id);
+		if (tmp) return tmp;
+	}
+	return NULL;
+}
+
+SceneNode* A3::getParentById(SceneNode *root, unsigned int id) {
+	for (SceneNode *child : root->children) {
+		if (child->m_nodeId == id) return root;
+		SceneNode *tmp = getParentById(child, id);
+		if (tmp) return tmp;
+	}
+	return NULL;
+}
+
 //----------------------------------------------------------------------------------------
 /*
  * Called once, after program is signaled to terminate.
@@ -644,7 +668,9 @@ bool A3::mouseMoveEvent (
 				//m_rootNode->translate(vec3( 0.0f, 0.0f, y_diff / 100 ));
 			}
 		} else if (cur_mode == JOINTS) {
-		
+			if (ImGui::IsMouseDown(MIDDLE_MOUSE)) {
+
+			}
 		}
 		
 		mouse_x_position = xPos;
@@ -666,6 +692,49 @@ bool A3::mouseButtonInputEvent (
 	bool eventHandled(false);
 
 	// Fill in with event handling code...
+	if (cur_mode == JOINTS) {
+		if (button == GLFW_MOUSE_BUTTON_LEFT && actions == GLFW_PRESS) {
+			double xpos, ypos;
+			glfwGetCursorPos( m_window, &xpos, &ypos);
+
+			do_picking = true;
+
+			uploadCommonSceneUniforms();
+			glClearColor(1.0, 1.0, 1.0, 1.0);
+			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+			glClearColor(0.35, 0.35, 0.35, 1.0);
+
+			draw();
+
+			CHECK_GL_ERRORS;
+
+			xpos *= double(m_framebufferWidth) / double(m_windowWidth);
+			ypos = m_windowHeight - ypos;
+			ypos *= double(m_framebufferHeight) / double(m_windowHeight);
+
+			GLubyte buffer[ 4 ] = { 0, 0, 0, 0 };
+			glReadBuffer( GL_BACK );
+			glReadPixels( int(xpos), int(ypos), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
+			CHECK_GL_ERRORS;
+
+			unsigned int what = buffer[0] + (buffer[1] << 8) + (buffer[2] << 16);
+
+			SceneNode *node = getNodeById(m_rootNode.get(), what);
+			if (node != NULL) {
+				cout << "Node " << node->m_name << endl;
+				SceneNode *parent = getParentById(m_rootNode.get(), what);
+				cout << "Parent " << parent->m_name << endl;
+				if (parent->m_nodeType == NodeType::JointNode) {
+					parent->isSelected = !parent->isSelected;
+					node->isSelected = parent->isSelected;
+				}
+			}
+
+			do_picking = false;
+
+			CHECK_GL_ERRORS;
+		}
+	}
 
 	return eventHandled;
 }

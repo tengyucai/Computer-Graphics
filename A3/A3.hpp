@@ -90,6 +90,11 @@ private:
 	void resetOrientation();
 	void resetJoints();
 	void resetAll();
+
+	SceneNode *getNodeById(SceneNode *root, unsigned int id);
+	SceneNode *getParentById(SceneNode *root, unsigned int id);
+
+	bool do_picking;
 	
 	InteractionMode cur_mode;
 	bool enable_circle;
@@ -101,5 +106,5 @@ private:
 	double mouse_y_position;
 	
 	glm::mat4 translation;
-	glm::mat4 rotation;	
+	glm::mat4 rotation;
 };
