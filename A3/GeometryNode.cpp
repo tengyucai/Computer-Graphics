@@ -53,11 +53,11 @@ void GeometryNode::updateShaderUniforms(
 		//-- Set ModelView matrix:
 		GLint location = shader.getUniformLocation("ModelView");
 		glm::mat4 modelView;
-		// for (auto it = stack.rbegin(); it < stack.rend(); ++it) {
-		// 	modelView = (*it) * modelView;
-		// }
-		//modelView = viewMatrix * modelView;
-		modelView = viewMatrix * T * trans;
+		for (auto it = stack.rbegin(); it < stack.rend(); ++it) {
+			modelView = (*it) * modelView;
+		}
+		modelView = viewMatrix * modelView;
+		//modelView = viewMatrix * T * trans;
 		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
 		CHECK_GL_ERRORS;
 

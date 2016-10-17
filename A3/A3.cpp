@@ -669,7 +669,18 @@ bool A3::mouseMoveEvent (
 			}
 		} else if (cur_mode == JOINTS) {
 			if (ImGui::IsMouseDown(MIDDLE_MOUSE)) {
-
+				// for (auto node : selected_nodes) {
+				// 	if (node->m_joint_x.min == node->m_joint_x.max) { // y-axis
+				// 		node->rotate('y', y_diff);
+				// 	} else { // x-axis
+				// 		node->rotate('x', y_diff);
+				// 	}
+				// }
+				// if (!undo_stack.empty()) {
+				// 	Command *cur_cmd = undo_stack.top();
+				// 	cur_cmd->angle += y_diff;
+				// 	cur_cmd->execute();
+				// }
 			}
 		}
 		
@@ -727,12 +738,24 @@ bool A3::mouseButtonInputEvent (
 				if (parent->m_nodeType == NodeType::JointNode) {
 					parent->isSelected = !parent->isSelected;
 					node->isSelected = parent->isSelected;
+					if (parent->isSelected) {
+						selected_nodes.insert((JointNode *)parent);
+					} else {
+						selected_nodes.erase((JointNode *)parent);
+					}
 				}
 			}
 
 			do_picking = false;
 
 			CHECK_GL_ERRORS;
+		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+			if (actions == GLFW_PRESS) {
+				// Command *new_cmd = new Command(selected_nodes, 0.0f);
+				// undo_stack.push(new_cmd);
+			} else if (actions == GLFW_RELEASE) {
+				while (!redo_stack.empty()) redo_stack.pop();
+			}
 		}
 	}
 

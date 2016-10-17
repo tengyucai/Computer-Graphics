@@ -2,7 +2,7 @@
 
 #include <set>
 
-#include "JointNode.h"
+#include "JointNode.hpp"
 
 class Command {
 public:
@@ -10,7 +10,6 @@ public:
 	~Command() {};
 	void execute();
 	void undo();
-private:
 	float angle;
 	float prev_angle;
 	std::set<JointNode *> nodes;

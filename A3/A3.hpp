@@ -6,9 +6,13 @@
 #include "cs488-framework/MeshConsolidator.hpp"
 
 #include "SceneNode.hpp"
+#include "JointNode.hpp"
+#include "Command.hpp"
 
 #include <glm/glm.hpp>
 #include <memory>
+#include <stack>
+#include <set>
 
 struct LightSource {
 	glm::vec3 position;
@@ -107,4 +111,9 @@ private:
 	
 	glm::mat4 translation;
 	glm::mat4 rotation;
+
+	std::set<JointNode *> selected_nodes;
+	std::stack<Command *> undo_stack;
+	std::stack<Command *> redo_stack;
+	//Command *cur_cmd;
 };
