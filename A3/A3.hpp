@@ -118,5 +118,7 @@ private:
 	std::set<JointNode *> selected_nodes;
 	std::stack<Command *> undo_stack;
 	std::stack<Command *> redo_stack;
-	//Command *cur_cmd;
+	Command *cur_cmd;
+
+	SceneNode *head;
 };

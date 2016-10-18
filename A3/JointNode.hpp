@@ -10,10 +10,14 @@ public:
 	void set_joint_x(double min, double init, double max);
 	void set_joint_y(double min, double init, double max);
 
+	void rotate(char axis, float angle);
+
 	struct JointRange {
 		double min, init, max;
 	};
 
 
 	JointRange m_joint_x, m_joint_y;
+
+	float angle_x, angle_y;
 };

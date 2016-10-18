@@ -40,7 +40,7 @@ public:
     void remove_child(SceneNode* child);
 
 	//-- Transformations:
-    void rotate(char axis, float angle);
+    float rotate(char axis, float angle);
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
 
@@ -66,6 +66,6 @@ private:
 
 public:
     virtual void renderSceneNode(const ShaderProgram & shader, const glm::mat4 & viewMatrix, 
-        BatchInfoMap & m_batchInfoMap, std::deque<glm::mat4> & stack, glm::mat4 T, bool do_picking) const;
+        BatchInfoMap & m_batchInfoMap, std::deque<glm::mat4> & stack, bool do_picking) const;
 
 };

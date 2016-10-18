@@ -59,8 +59,6 @@ void A3::init()
 	enable_z_buffer = true;
 	enable_backface_culling = false;
 	enable_frontface_culling = false;
-	//mouse_x_position = 0.0;
-	//mouse_y_position = 0.0
 	translation = mat4();
 	rotation = mat4();
 	
@@ -101,6 +99,8 @@ void A3::init()
 	initLightSources();
 
 	do_picking = false;
+
+	head = getHead(m_rootNode);
 
 	// Exiting the current scope calls delete automatically on meshConsolidator freeing
 	// all vertex data resources.  This is fine since we already copied this data to
@@ -275,7 +275,8 @@ void A3::initViewMatrix() {
 //----------------------------------------------------------------------------------------
 void A3::initLightSources() {
 	// World-space position
-	m_light.position = vec3(-2.0f, 5.0f, 0.5f);
+	// m_light.position = vec3(-2.0f, 5.0f, 0.5f);
+	m_light.position = vec3(0.0f, 0.0f, 1.0f);
 	m_light.rgbIntensity = vec3(0.8f); // White light
 }
 
@@ -288,7 +289,11 @@ void A3::resetOrientation() {
 }
 
 void A3::resetJoints() {
-
+	while (!undo_stack.empty()) {
+		undo_stack.top()->undo();
+		undo_stack.pop();
+	}
+	while (!redo_stack.empty()) redo_stack.pop();
 }
 
 void A3::resetAll() {
@@ -436,6 +441,9 @@ void A3::guiLogic()
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
 
+		if (undo_stack.empty()) ImGui::Text( "End of undo stack!" );
+		if (redo_stack.empty()) ImGui::Text( "End of redo stack!" );
+
 	ImGui::End();
 }
 
@@ -529,31 +537,9 @@ void A3::renderSceneGraph(const SceneNode & root) {
 	deque<mat4> transform_stack;
 
 	mat4 prev_trans = m_rootNode->get_transform();
-	
 	m_rootNode->set_transform(translation * m_rootNode->get_transform() * rotation);
-
-	root.renderSceneNode(m_shader, m_view, m_batchInfoMap, transform_stack, m_rootNode->get_transform(), do_picking);
-
+	root.renderSceneNode(m_shader, m_view, m_batchInfoMap, transform_stack, do_picking);
 	m_rootNode->set_transform(prev_trans);
-
-	// for (const SceneNode * node : root.children) {
-
-	// 	if (node->m_nodeType != NodeType::GeometryNode)
-	// 		continue;
-
-	// 	const GeometryNode * geometryNode = static_cast<const GeometryNode *>(node);
-
-	// 	updateShaderUniforms(m_shader, *geometryNode, m_view);
-
-
-	// 	// Get the BatchInfo corresponding to the GeometryNode's unique MeshId.
-	// 	BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
-
-	// 	//-- Now render the mesh:
-	// 	m_shader.enable();
-	// 	glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
-	// 	m_shader.disable();
-	// }
 
 	glBindVertexArray(0);
 	CHECK_GL_ERRORS;
@@ -619,6 +605,15 @@ SceneNode* A3::getParentById(SceneNode *root, unsigned int id) {
 	return NULL;
 }
 
+SceneNode* A3::getHead(SceneNode *root) {
+	if (root->m_name == "head") return root;
+	for (auto child : root->children) {
+		SceneNode *tmp = getHead(child);
+		if (tmp) return tmp;
+	}
+	return NULL;
+}
+
 void A3::undo() {
 	cout << "Undo" << endl;
 	if (!undo_stack.empty()) {
@@ -632,7 +627,15 @@ void A3::undo() {
 }
 
 void A3::redo() {
-
+	cout << "Redo" << endl;
+	if (!redo_stack.empty()) {
+		Command *redo_cmd = redo_stack.top();
+		redo_stack.pop();
+		undo_stack.push(redo_cmd);
+		redo_cmd->execute();
+	} else {
+		cout << "redo stack empty!" << endl;
+	}
 }
 
 //----------------------------------------------------------------------------------------
@@ -686,11 +689,15 @@ bool A3::mouseMoveEvent (
 				//m_rootNode->translate(vec3( 0.0f, 0.0f, y_diff / 100 ));
 			}
 		} else if (cur_mode == JOINTS) {
-			if (ImGui::IsMouseDown(RIGHT_MOUSE)) {
-				cout << "rotate " << y_diff / 10 << endl;
-				Command *cur_cmd = undo_stack.top();
-				cur_cmd->angle = y_diff;
-				cur_cmd->execute();
+			if (ImGui::IsMouseDown(MIDDLE_MOUSE)) {
+				for (auto node : selected_nodes) {
+					if (node->m_joint_x.min == node->m_joint_x.max) { // y-axis
+						node->rotate('y', y_diff);
+					} else { // x-axis
+						node->rotate('x', y_diff);
+					}
+				}
+				cur_cmd->angle += y_diff;
 			}
 		}
 		
@@ -742,9 +749,7 @@ bool A3::mouseButtonInputEvent (
 
 			SceneNode *node = getNodeById(m_rootNode.get(), what);
 			if (node != NULL) {
-				cout << "Node " << node->m_name << endl;
 				SceneNode *parent = getParentById(m_rootNode.get(), what);
-				cout << "Parent " << parent->m_name << endl;
 				if (parent->m_nodeType == NodeType::JointNode) {
 					parent->isSelected = !parent->isSelected;
 					node->isSelected = parent->isSelected;
@@ -759,11 +764,12 @@ bool A3::mouseButtonInputEvent (
 			do_picking = false;
 
 			CHECK_GL_ERRORS;
-		} else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
 			if (actions == GLFW_PRESS) {
-				Command *new_cmd = new Command(selected_nodes, 0.0f);
-				undo_stack.push(new_cmd);
+				cur_cmd = new Command({selected_nodes.begin(), selected_nodes.end()}, 0.0f);
 			} else if (actions == GLFW_RELEASE) {
+				undo_stack.push(cur_cmd);
+				cur_cmd = NULL;
 				while (!redo_stack.empty()) redo_stack.pop();
 			}
 		}

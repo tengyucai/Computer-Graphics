@@ -74,7 +74,7 @@ void SceneNode::remove_child(SceneNode* child) {
 }
 
 //---------------------------------------------------------------------------------------
-void SceneNode::rotate(char axis, float angle) {
+float SceneNode::rotate(char axis, float angle) {
 	vec3 rot_axis;
 
 	switch (axis) {
@@ -92,6 +92,8 @@ void SceneNode::rotate(char axis, float angle) {
 	}
 	mat4 rot_matrix = glm::rotate(degreesToRadians(angle), rot_axis);
 	trans = rot_matrix * trans;
+
+	return angle;
 }
 
 //---------------------------------------------------------------------------------------
@@ -139,13 +141,12 @@ void SceneNode::renderSceneNode(
 	const glm::mat4 & viewMatrix, 
 	BatchInfoMap & m_batchInfoMap,
 	std::deque<glm::mat4> & stack,
-	glm::mat4 T,
 	bool do_picking) const {
 
 	stack.push_back(trans);
 
 	for (const SceneNode *node : this->children) {
-		node->renderSceneNode(shader, viewMatrix, m_batchInfoMap, stack, T, do_picking);
+		node->renderSceneNode(shader, viewMatrix, m_batchInfoMap, stack, do_picking);
 	}
 
 	stack.pop_back();

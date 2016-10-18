@@ -21,16 +21,15 @@ void GeometryNode::renderSceneNode(
 	const glm::mat4 & viewMatrix, 
 	BatchInfoMap & m_batchInfoMap,
 	std::deque<glm::mat4> & stack,
-	glm::mat4 T,
 	bool do_picking) const {
 
 	stack.push_back(trans);
 
 	for (const SceneNode *node : this->children) {
-		node->renderSceneNode(shader, viewMatrix, m_batchInfoMap, stack, T * trans, do_picking);
+		node->renderSceneNode(shader, viewMatrix, m_batchInfoMap, stack, do_picking);
 	}
 
-	updateShaderUniforms(shader, viewMatrix, stack, T, do_picking);
+	updateShaderUniforms(shader, viewMatrix, stack, do_picking);
 
 	BatchInfo batchInfo = m_batchInfoMap[meshId];
 
@@ -44,8 +43,7 @@ void GeometryNode::renderSceneNode(
 void GeometryNode::updateShaderUniforms(
 		const ShaderProgram & shader,
 		const glm::mat4 & viewMatrix,
-		std::deque<glm::mat4> & stack, 
-		glm::mat4 T,
+		std::deque<glm::mat4> & stack,
 		bool do_picking) const {
 
 	shader.enable();
@@ -57,7 +55,6 @@ void GeometryNode::updateShaderUniforms(
 			modelView = (*it) * modelView;
 		}
 		modelView = viewMatrix * modelView;
-		//modelView = viewMatrix * T * trans;
 		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
 		CHECK_GL_ERRORS;
 

@@ -1,15 +1,28 @@
 #pragma once
 
-#include <set>
+#include <vector>
 
 #include "JointNode.hpp"
 
+// class Command {
+// public:
+// 	Command(std::vector<JointNode *> nodes);
+// 	~Command();
+// 	void execute(float angle);
+// 	void undo();
+// 	void redo();
+// 	//float angle;
+// 	std::vector<float> prev_angles;
+// 	std::vector<JointNode *> nodes;
+// };
+
 class Command {
 public:
-	Command(std::set<JointNode *> nodes, float angle);
+	Command(std::vector<JointNode *> nodes, float angle);
 	~Command();
 	void execute();
 	void undo();
 	float angle;
-	std::set<JointNode *> nodes;
+	std::vector<float> prev_angles;
+	std::vector<JointNode *> nodes;
 };
