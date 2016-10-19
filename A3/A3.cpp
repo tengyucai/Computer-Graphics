@@ -53,6 +53,7 @@ A3::~A3()
  */
 void A3::init()
 {
+	getArcballRotationMatrix(55.5f,  55.5f,  467.0f,  436.0f);
 	// Init variables
 	cur_mode = POSITION_ORIENTATION;
 	enable_circle = false;
@@ -100,7 +101,7 @@ void A3::init()
 
 	do_picking = false;
 
-	head = getHead(m_rootNode);
+	head = (JointNode *)getHead(m_rootNode.get());
 
 	// Exiting the current scope calls delete automatically on meshConsolidator freeing
 	// all vertex data resources.  This is fine since we already copied this data to
@@ -276,7 +277,7 @@ void A3::initViewMatrix() {
 void A3::initLightSources() {
 	// World-space position
 	// m_light.position = vec3(-2.0f, 5.0f, 0.5f);
-	m_light.position = vec3(0.0f, 0.0f, 1.0f);
+	m_light.position = vec3(-1.0f, 1.0f, 1.0f);
 	m_light.rgbIntensity = vec3(0.8f); // White light
 }
 
@@ -606,8 +607,8 @@ SceneNode* A3::getParentById(SceneNode *root, unsigned int id) {
 }
 
 SceneNode* A3::getHead(SceneNode *root) {
-	if (root->m_name == "head") return root;
 	for (auto child : root->children) {
+		if (child->m_name == "head") return root;
 		SceneNode *tmp = getHead(child);
 		if (tmp) return tmp;
 	}
@@ -689,13 +690,28 @@ bool A3::mouseMoveEvent (
 				//m_rootNode->translate(vec3( 0.0f, 0.0f, y_diff / 100 ));
 			}
 		} else if (cur_mode == JOINTS) {
-			if (ImGui::IsMouseDown(MIDDLE_MOUSE)) {
-				for (auto node : selected_nodes) {
-					if (node->m_joint_x.min == node->m_joint_x.max) { // y-axis
-						node->rotate('y', y_diff);
-					} else { // x-axis
-						node->rotate('x', y_diff);
+			if (ImGui::IsMouseDown(MIDDLE_MOUSE) || ImGui::IsMouseDown(RIGHT_MOUSE)) {
+				cur_cmd->enable_joints = ImGui::IsMouseDown(MIDDLE_MOUSE);
+				cur_cmd->enable_head = ImGui::IsMouseDown(RIGHT_MOUSE);
+				if (cur_cmd->enable_joints) {
+					cout << "jonits" << endl;
+					for (auto node : selected_nodes) {
+						cout << node->m_name << endl;
+						if (node->m_name == "headJoint") {
+							cout << "Head x " << node->angle_x << endl;
+							cout << "Head y " << node->angle_y << endl;
+							node->rotate('x', y_diff);
+						} else if (node->m_joint_x.min == node->m_joint_x.max) { // y-axis
+							node->rotate('y', y_diff);
+						} else { // x-axis
+							node->rotate('x', y_diff);
+						}
 					}
+				}
+				if (cur_cmd->enable_head) {
+					cout << "Head x " << head->angle_x << endl;
+					cout << "Head y " << head->angle_y << endl;
+					head->rotate('y', y_diff);
 				}
 				cur_cmd->angle += y_diff;
 			}
@@ -764,7 +780,7 @@ bool A3::mouseButtonInputEvent (
 			do_picking = false;
 
 			CHECK_GL_ERRORS;
-		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
+		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE || button == GLFW_MOUSE_BUTTON_RIGHT) {
 			if (actions == GLFW_PRESS) {
 				cur_cmd = new Command({selected_nodes.begin(), selected_nodes.end()}, 0.0f);
 			} else if (actions == GLFW_RELEASE) {
@@ -773,6 +789,17 @@ bool A3::mouseButtonInputEvent (
 				while (!redo_stack.empty()) redo_stack.pop();
 			}
 		}
+		// else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+		// 	if (actions == GLFW_PRESS) {
+		// 		vector<JointNode *> selected_node;
+		// 		selected_node.push_back(head);
+		// 		cur_cmd = new Command(selected_node, 0.0f);
+		// 	} else if (actions == GLFW_RELEASE) {
+		// 		undo_stack.push(cur_cmd);
+		// 		cur_cmd = NULL;
+		// 		while (!redo_stack.empty()) redo_stack.pop();
+		// 	}
+		// }
 	}
 
 	return eventHandled;

@@ -45,17 +45,17 @@ void JointNode::rotate(char axis, float angle) {
 	switch (axis) {
 		case 'x':
 			rot_axis = vec3(1,0,0);
-			if (angle_x + angle <= m_joint_x.min) angle_x = m_joint_x.min;
-			else if (angle_x + angle >= m_joint_x.max) angle_x = m_joint_x.max;
+			if (angle_x + angle <= m_joint_x.min) {angle_x = m_joint_x.min; angle = 0;}
+			else if (angle_x + angle >= m_joint_x.max) {angle_x = m_joint_x.max; angle = 0;}
 			else angle_x += angle;
-			angle = angle_x;
+			//angle = angle_x;
 			break;
 		case 'y':
 			rot_axis = vec3(0,1,0);
-			if (angle_y + angle <= m_joint_y.min) angle_y = m_joint_y.min;
-			else if (angle_y + angle >= m_joint_y.max) angle_y = m_joint_y.max;
+			if (angle_y + angle <= m_joint_y.min) {angle_y = m_joint_y.min; angle = 0;}
+			else if (angle_y + angle >= m_joint_y.max) {angle_y = m_joint_y.max; angle = 0;}
 			else angle_y += angle;
-			angle = angle_y;
+			//angle = angle_y;
 	        break;
 		case 'z':
 			rot_axis = vec3(0,0,1);
@@ -64,6 +64,6 @@ void JointNode::rotate(char axis, float angle) {
 			break;
 	}
 
-	// mat4 rot_matrix = glm::rotate(degreesToRadians(angle), rot_axis);
-	trans = glm::rotate(degreesToRadians(angle), rot_axis);
+	mat4 rot_matrix = glm::rotate(degreesToRadians(angle), rot_axis);
+	trans = glm::rotate(degreesToRadians(angle), rot_axis) * trans;
 }

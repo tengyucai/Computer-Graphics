@@ -24,5 +24,8 @@ public:
 	void undo();
 	float angle;
 	std::vector<float> prev_angles;
+	float prev_head_angle;
 	std::vector<JointNode *> nodes;
+	bool enable_joints;
+	bool enable_head;
 };

@@ -100,6 +100,7 @@ private:
 
 	SceneNode *getNodeById(SceneNode *root, unsigned int id);
 	SceneNode *getParentById(SceneNode *root, unsigned int id);
+	SceneNode *getHead(SceneNode *root);
 
 	bool do_picking;
 	
@@ -120,5 +121,5 @@ private:
 	std::stack<Command *> redo_stack;
 	Command *cur_cmd;
 
-	SceneNode *head;
+	JointNode *head;
 };
