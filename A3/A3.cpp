@@ -291,10 +291,11 @@ void A3::resetOrientation() {
 
 void A3::resetJoints() {
 	while (!undo_stack.empty()) {
-		undo_stack.top()->undo();
-		undo_stack.pop();
+		undo();
 	}
-	while (!redo_stack.empty()) redo_stack.pop();
+	while (!redo_stack.empty()) {
+		redo_stack.pop();
+	}
 }
 
 void A3::resetAll() {
@@ -434,6 +435,7 @@ void A3::guiLogic()
 		//}
 		if ( ImGui::RadioButton( "Position/Orientation (P)", cur_mode == POSITION_ORIENTATION ) ) {
 			cur_mode = POSITION_ORIENTATION;
+			selected_nodes.clear();
 		}
 		
 		if ( ImGui::RadioButton( "Joints (J)", cur_mode == JOINTS ) ) {
@@ -616,24 +618,24 @@ SceneNode* A3::getHead(SceneNode *root) {
 }
 
 void A3::undo() {
-	cout << "Undo" << endl;
 	if (!undo_stack.empty()) {
 		Command *undo_cmd = undo_stack.top();
 		undo_stack.pop();
 		redo_stack.push(undo_cmd);
 		undo_cmd->undo();
+		cur_cmd = NULL;
 	} else {
 		cout << "undo stack empty!" << endl;
 	}
 }
 
 void A3::redo() {
-	cout << "Redo" << endl;
 	if (!redo_stack.empty()) {
 		Command *redo_cmd = redo_stack.top();
 		redo_stack.pop();
 		undo_stack.push(redo_cmd);
 		redo_cmd->execute();
+		cur_cmd = NULL;
 	} else {
 		cout << "redo stack empty!" << endl;
 	}
@@ -691,15 +693,14 @@ bool A3::mouseMoveEvent (
 			}
 		} else if (cur_mode == JOINTS) {
 			if (ImGui::IsMouseDown(MIDDLE_MOUSE) || ImGui::IsMouseDown(RIGHT_MOUSE)) {
+				if (!cur_cmd) {
+					cur_cmd = new Command({selected_nodes.begin(), selected_nodes.end()}, 0.0f);
+				}
 				cur_cmd->enable_joints = ImGui::IsMouseDown(MIDDLE_MOUSE);
 				cur_cmd->enable_head = ImGui::IsMouseDown(RIGHT_MOUSE);
 				if (cur_cmd->enable_joints) {
-					cout << "jonits" << endl;
 					for (auto node : selected_nodes) {
-						cout << node->m_name << endl;
 						if (node->m_name == "headJoint") {
-							cout << "Head x " << node->angle_x << endl;
-							cout << "Head y " << node->angle_y << endl;
 							node->rotate('x', y_diff);
 						} else if (node->m_joint_x.min == node->m_joint_x.max) { // y-axis
 							node->rotate('y', y_diff);
@@ -708,9 +709,7 @@ bool A3::mouseMoveEvent (
 						}
 					}
 				}
-				if (cur_cmd->enable_head) {
-					cout << "Head x " << head->angle_x << endl;
-					cout << "Head y " << head->angle_y << endl;
+				if (cur_cmd->enable_head && selected_nodes.find(head) != selected_nodes.end()) {
 					head->rotate('y', y_diff);
 				}
 				cur_cmd->angle += y_diff;
@@ -781,12 +780,12 @@ bool A3::mouseButtonInputEvent (
 
 			CHECK_GL_ERRORS;
 		} else if (button == GLFW_MOUSE_BUTTON_MIDDLE || button == GLFW_MOUSE_BUTTON_RIGHT) {
-			if (actions == GLFW_PRESS) {
-				cur_cmd = new Command({selected_nodes.begin(), selected_nodes.end()}, 0.0f);
-			} else if (actions == GLFW_RELEASE) {
-				undo_stack.push(cur_cmd);
-				cur_cmd = NULL;
-				while (!redo_stack.empty()) redo_stack.pop();
+			if (actions == GLFW_RELEASE) {
+				if (!selected_nodes.empty()) {
+					undo_stack.push(cur_cmd);
+					cur_cmd = NULL;
+					while (!redo_stack.empty()) redo_stack.pop();
+				}
 			}
 		}
 		// else if (button == GLFW_MOUSE_BUTTON_RIGHT) {

@@ -13,4 +13,7 @@ public:
 
 	Material *m_material;
 	Primitive *m_primitive;
+
+public:
+    bool virtual intersect(const glm::vec4 &eye, const glm::vec4 &ray);
 };

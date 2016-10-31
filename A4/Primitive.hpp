@@ -5,16 +5,25 @@
 class Primitive {
 public:
   virtual ~Primitive();
+
+public:
+  bool virtual intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };
 
 class Sphere : public Primitive {
 public:
   virtual ~Sphere();
+
+public:
+  bool virtual intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };
 
 class Cube : public Primitive {
 public:
   virtual ~Cube();
+
+public:
+  bool virtual intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };
 
 class NonhierSphere : public Primitive {
@@ -28,6 +37,9 @@ public:
 private:
   glm::vec3 m_pos;
   double m_radius;
+
+public:
+  bool virtual intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };
 
 class NonhierBox : public Primitive {
@@ -42,4 +54,7 @@ public:
 private:
   glm::vec3 m_pos;
   double m_size;
+
+public:
+  bool virtual intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };

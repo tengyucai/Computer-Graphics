@@ -1,0 +1,55 @@
+Assignment 3
+
+Name:		Tengyu Cai
+Student #: 	20494373
+Student id: t7cai
+
+The final executable was compiled on machine gl33
+
+# Compilation
+Run the following commands to compile the program:
+	$ premake4 gmake
+	$ make
+
+Run the following command to invoke the program:
+	$ ./A3 Assets/puppet.lua
+
+
+# Manual
+Meets all objectives listed in the assignment description.
+
+I create a new puppet Baymax (Assets/puppet.lua) which is the character from the 3D computer-animated film "Big Hero 6". All the components used are white spheres. The Hierarchy is as below:
+
+			      torso
+                /   |   \
+            leftLeg |  rightLeg
+                    |
+                 shoulder
+                /   |    \
+               /   head   \
+      leftUpperArm       rightUpperArm
+            |                  |
+      leftLowerArm       rightLowerArm
+      /  |   |   \         /   |   |  \
+finger   |   |  finger finger  |   |  finger
+     finger finger         finger finger
+
+
+There are 16 degrees of freedom in total:
+Legs      - 2
+Shoulder  - 1
+Head      - 1
+UpperArms - 2
+LowerArms - 2
+Fingers   - 8
+
+
+I add two new fields to the JointNode class: angle_x and angle_y to keep track of the current x or y angle.
+I also create a new Command class as the realization of the command pattern.
+
+I highlight all the selected node with yellow material.
+I assume that after switching to Position/Orientation mode from Joints mode, all the selected nodes will not be cleared and will remain highlighted.
+
+
+Extra features are as followed:
+	N/A

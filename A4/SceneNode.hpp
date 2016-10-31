@@ -54,4 +54,7 @@ public:
 private:
 	// The number of SceneNode instances.
 	static unsigned int nodeInstanceCount;
+
+public:
+    bool virtual intersect(const glm::vec4 &eye, const glm::vec4 &ray);
 };
