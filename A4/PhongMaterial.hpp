@@ -14,4 +14,8 @@ private:
   glm::vec3 m_ks;
 
   double m_shininess;
+
+public:
+	glm::vec3 getkd();
+	glm::vec3 getks();
 };

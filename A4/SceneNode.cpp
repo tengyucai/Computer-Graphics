@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <limits>
 using namespace std;
 
 #include <glm/glm.hpp>
@@ -136,13 +137,17 @@ std::ostream & operator << (std::ostream & os, const SceneNode & node) {
 }
 
 Intersection* SceneNode::intersect(const glm::vec4 &eye, const glm::vec4 &ray) {
-	Intersection *intersection;
+	Intersection *intersection = new Intersection();
+	Intersection *tmp;
+	float min_t = std::numeric_limits<float>::infinity();;
 
 	for (SceneNode *child : children) {
-		intersection = child->intersect(invtrans * eye, invtrans * ray);
-		//hit = child->intersect(eye, ray);
-		if (intersection->hit) return intersection;
+		tmp = child->intersect(invtrans * eye, invtrans * ray);
+		if (tmp->hit && tmp->t < min_t) {
+			min_t = tmp->t;
+			intersection = tmp;
+		}
 	}
 
-	return new Intersection();
+	return intersection;
 }

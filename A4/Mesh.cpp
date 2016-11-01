@@ -135,7 +135,7 @@ Intersection* Mesh::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
 	int i = 0;
   for (Triangle face : m_faces) {
     bool hit = rayTriangleIntersect(eye, ray, m_vertices[face.v1], m_vertices[face.v2], m_vertices[face.v3]);
-    if (hit) return new Intersection(true, glm::vec3(), glm::vec3());
+    if (hit) return new Intersection();//Intersection(true, glm::vec3(), glm::vec3());
     ++i;
 	}
 	return new Intersection();

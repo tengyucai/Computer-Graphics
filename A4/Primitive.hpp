@@ -10,10 +10,11 @@ public:
   glm::vec3 point;
   glm::vec3 normal;
   Material *material;
+  float t;
   Intersection()
-    : hit(false), point(glm::vec3()), normal(glm::vec3()), material(NULL) {}
-  Intersection(bool hit, glm::vec3 point, glm::vec3 normal)
-    : hit(hit), point(point), normal(normal), material(NULL) {}
+    : hit(false), point(glm::vec3()), normal(glm::vec3()), material(NULL), t(0) {}
+  Intersection(bool hit, float t, glm::vec3 point, glm::vec3 normal)
+    : hit(hit), t(t), point(point), normal(normal), material(NULL) {}
 };
 
 class Primitive {

@@ -2,6 +2,7 @@
 
 #include "A4.hpp"
 #include "Primitive.hpp"
+#include "PhongMaterial.hpp"
 
 void A4_Render(
 		// What to render
@@ -59,9 +60,30 @@ void A4_Render(
 			Intersection *intersection = root->intersect(glm::vec4(eye, 1), glm::vec4(ray, 0));
 
 			if (intersection != NULL && intersection->hit) {
-				image(x, y, 0) = 0;
-				image(x, y, 1) = 0;
-				image(x, y, 2) = 0;
+				// Ambient Reflection
+				PhongMaterial *material = (PhongMaterial*)intersection->material;
+				image(x, y, 0) = ambient.x * material->getkd().x;
+				image(x, y, 1) = ambient.y * material->getkd().y;
+				image(x, y, 2) = ambient.z * material->getkd().z;
+
+				for(const Light * light : lights) {
+					//std::cout << "\t\t" <<  *light << std::endl;
+					float r = glm::length(light->position - intersection->point);
+					float falloff = light->falloff[0] + light->falloff[1] * r + light->falloff[2] * r * r;
+					glm::vec3 normal = glm::normalize(intersection->normal);
+					glm::vec3 l = glm::normalize(light->position - intersection->point);
+					if (glm::dot(normal, l) > 0) { 
+						image(x, y, 0) += light->colour.x / falloff * material->getkd().x * glm::dot(normal, l);
+						image(x, y, 1) += light->colour.y / falloff * material->getkd().y * glm::dot(normal, l);
+						image(x, y, 2) += light->colour.z / falloff * material->getkd().z * glm::dot(normal, l);
+
+						glm::vec3 reflection = glm::normalize(2.0f * glm::dot(normal - l, normal) - l);
+						glm::vec3 v = glm::normalize(eye - intersection->point);
+						image(x, y, 0) += light->colour.x / falloff * material->getks().x * glm::dot(reflection, v);
+						image(x, y, 1) += light->colour.y / falloff * material->getks().y * glm::dot(reflection, v);
+						image(x, y, 2) += light->colour.z / falloff * material->getks().z * glm::dot(reflection, v);
+					}
+				}
 			} else {
 				// Red: increasing from top to bottom
 				image(x, y, 0) = (double)y / h;

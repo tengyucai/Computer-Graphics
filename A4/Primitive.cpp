@@ -46,7 +46,7 @@ Intersection* NonhierSphere::intersect(const glm::vec3 &eye, const glm::vec3 &ra
 		if (t < 0) return new Intersection();
 		glm::vec3 point = eye + t * ray;
 		glm::vec3 normal = point - m_pos;
-		return new Intersection(true, point, normal);
+		return new Intersection(true, t, point, normal);
 	}
 }
 
@@ -96,5 +96,5 @@ Intersection* NonhierBox::intersect(const glm::vec3 &eye, const glm::vec3 &ray) 
 		tmax = tzmax;
 	}
 
-	return new Intersection(true, glm::vec3(), glm::vec3());
+	return new Intersection();//Intersection(true, glm::vec3(), glm::vec3());
 }
