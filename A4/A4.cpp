@@ -1,6 +1,7 @@
 #include <glm/ext.hpp>
 
 #include "A4.hpp"
+#include "Primitive.hpp"
 
 void A4_Render(
 		// What to render
@@ -42,9 +43,11 @@ void A4_Render(
 	size_t w = image.width();
 
 	glm::vec3 m_view = glm::normalize(view);
-	glm::vec3 m_up = glm::normalize(up);
+	glm::vec3 m_up = glm::normalize(up );
 	glm::vec3 m_side = glm::normalize(glm::cross(m_view, m_up));
 
+	int progress = 0;
+	std::cout << "Progress : " << progress << "%" << std::endl;
 	for (uint y = 0; y < h; ++y) {
 		for (uint x = 0; x < w; ++x) {
 
@@ -53,9 +56,9 @@ void A4_Render(
 			ray = glm::normalize(ray);
 
 			//std::cout << "eye " << glm::to_string(eye) << " ray " << glm::to_string(ray) << std::endl;
-			bool intersect = root->intersect(glm::vec4(eye, 1), glm::vec4(ray, 0));
+			Intersection *intersection = root->intersect(glm::vec4(eye, 1), glm::vec4(ray, 0));
 
-			if (intersect) {
+			if (intersection != NULL && intersection->hit) {
 				image(x, y, 0) = 0;
 				image(x, y, 1) = 0;
 				image(x, y, 2) = 0;
@@ -67,6 +70,11 @@ void A4_Render(
 				// Blue: in lower-left and upper-right corners
 				image(x, y, 2) = ((y < h/2 && x < w/2)
 							  || (y >= h/2 && x >= w/2)) ? 1.0 : 0.0;
+			}
+
+			if (((y+1) * w + (x+1)) / (h * w) * 100 >= (progress + 10)) {
+				progress += 10;
+				std::cout << "Progress : " << progress << "%" << std::endl;
 			}
 		}
 	}

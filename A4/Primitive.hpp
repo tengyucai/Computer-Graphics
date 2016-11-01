@@ -1,13 +1,27 @@
 #pragma once
 
+#include "Material.hpp"
+
 #include <glm/glm.hpp>
+
+class Intersection {
+public:
+  bool hit;
+  glm::vec3 point;
+  glm::vec3 normal;
+  Material *material;
+  Intersection()
+    : hit(false), point(glm::vec3()), normal(glm::vec3()), material(NULL) {}
+  Intersection(bool hit, glm::vec3 point, glm::vec3 normal)
+    : hit(hit), point(point), normal(normal), material(NULL) {}
+};
 
 class Primitive {
 public:
   virtual ~Primitive();
 
 public:
-  bool virtual intersect(const glm::vec3 &eye, const glm::vec3 &ray);
+  Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };
 
 class Sphere : public Primitive {
@@ -15,7 +29,7 @@ public:
   virtual ~Sphere();
 
 public:
-  bool virtual intersect(const glm::vec3 &eye, const glm::vec3 &ray);
+  Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };
 
 class Cube : public Primitive {
@@ -23,7 +37,7 @@ public:
   virtual ~Cube();
 
 public:
-  bool virtual intersect(const glm::vec3 &eye, const glm::vec3 &ray);
+  Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };
 
 class NonhierSphere : public Primitive {
@@ -39,7 +53,7 @@ private:
   double m_radius;
 
 public:
-  bool virtual intersect(const glm::vec3 &eye, const glm::vec3 &ray);
+  Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };
 
 class NonhierBox : public Primitive {
@@ -56,5 +70,5 @@ private:
   double m_size;
 
 public:
-  bool virtual intersect(const glm::vec3 &eye, const glm::vec3 &ray);
+  Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };

@@ -18,5 +18,5 @@ public:
 	JointRange m_joint_x, m_joint_y;
 
 public:
-    bool virtual intersect(const glm::vec4 &eye, const glm::vec4 &ray);
+    Intersection virtual *intersect(const glm::vec4 &eye, const glm::vec4 &ray);
 };

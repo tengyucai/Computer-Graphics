@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Material.hpp"
+#include "Primitive.hpp"
 
 #include <glm/glm.hpp>
 
@@ -56,5 +57,5 @@ private:
 	static unsigned int nodeInstanceCount;
 
 public:
-    bool virtual intersect(const glm::vec4 &eye, const glm::vec4 &ray);
+    Intersection virtual *intersect(const glm::vec4 &eye, const glm::vec4 &ray);
 };

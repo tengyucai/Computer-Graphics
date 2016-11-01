@@ -7,46 +7,54 @@ Primitive::~Primitive()
 {
 }
 
-bool Primitive::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
-	return false;
+Intersection* Primitive::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
+	return new Intersection();
 }
 
 Sphere::~Sphere()
 {
 }
 
-bool Sphere::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
-	return false;
+Intersection* Sphere::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
+	return new Intersection();
 }
 
 Cube::~Cube()
 {
 }
 
-bool Cube::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
-	return false;
+Intersection* Cube::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
+	return new Intersection();
 }
 
 NonhierSphere::~NonhierSphere()
 {
 }
 
-bool NonhierSphere::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
+Intersection* NonhierSphere::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
 	double roots[2];
 	double A = glm::dot(ray, ray);
 	double B = 2 * glm::dot(eye - m_pos, ray);
 	double C = glm::dot(eye - m_pos, eye - m_pos) - m_radius * m_radius;
 	size_t num = quadraticRoots(A, B, C, roots);
 	//std::cout << "A " << A << " B " << B << " C " <<  C << " num " << num << std::endl;
-	if (num > 0) return true;
-	else return false;
+	if (num == 0) {
+		return new Intersection();
+	} else {
+		float t = roots[0];
+		if (num == 2 && roots[1] < roots[0]) t = roots[1];
+		if (t < 0) return new Intersection();
+		glm::vec3 point = eye + t * ray;
+		glm::vec3 normal = point - m_pos;
+		return new Intersection(true, point, normal);
+	}
 }
 
 NonhierBox::~NonhierBox()
 {
 }
 
-bool NonhierBox::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
+Intersection* NonhierBox::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
 	glm::vec3 bounds[2];
 	bounds[0] = m_pos;
 	bounds[1] = glm::vec3(m_pos.x + m_size, m_pos.y + m_size, m_pos.z + m_size);
@@ -66,7 +74,7 @@ bool NonhierBox::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
 	tymax = (bounds[1-sign[1]].y - eye.y) * invdir.y;
 
 	if ((tmin > tymax) || (tymin > tmax)) {
-		return false;
+		return new Intersection();
 	}
 	if (tymin > tmin) {
 		tmin = tymin;
@@ -79,7 +87,7 @@ bool NonhierBox::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
 	tzmax = (bounds[1-sign[2]].z - eye.z) * invdir.z;
 
 	if ((tmin > tzmax) || (tzmin > tmax)) {
-		return false;
+		return new Intersection();
 	}
 	if (tzmin > tmin) {
 		tmin = tzmax;
@@ -88,5 +96,5 @@ bool NonhierBox::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
 		tmax = tzmax;
 	}
 
-	return true;
+	return new Intersection(true, glm::vec3(), glm::vec3());
 }

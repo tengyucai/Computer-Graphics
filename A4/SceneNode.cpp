@@ -135,14 +135,14 @@ std::ostream & operator << (std::ostream & os, const SceneNode & node) {
 	return os;
 }
 
-bool SceneNode::intersect(const glm::vec4 &eye, const glm::vec4 &ray) {
-	bool hit = false;
+Intersection* SceneNode::intersect(const glm::vec4 &eye, const glm::vec4 &ray) {
+	Intersection *intersection;
 
 	for (SceneNode *child : children) {
-		hit = child->intersect(invtrans * eye, invtrans * ray);
+		intersection = child->intersect(invtrans * eye, invtrans * ray);
 		//hit = child->intersect(eye, ray);
-		if (hit) break;
+		if (intersection->hit) return intersection;
 	}
 
-	return hit;
+	return new Intersection();
 }

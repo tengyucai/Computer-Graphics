@@ -26,7 +26,7 @@ void GeometryNode::setMaterial( Material *mat )
 	m_material = mat;
 }
 
-bool GeometryNode::intersect(const glm::vec4 &eye, const glm::vec4 &ray) {
+Intersection* GeometryNode::intersect(const glm::vec4 &eye, const glm::vec4 &ray) {
 	return m_primitive->intersect(glm::vec3(invtrans * eye), glm::vec3(invtrans * ray));
 	//return m_primitive->intersect(glm::vec3(eye), glm::vec3(ray));
 }

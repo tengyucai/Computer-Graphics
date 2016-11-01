@@ -25,6 +25,6 @@ void JointNode::set_joint_y(double min, double init, double max) {
 	m_joint_y.max = max;
 }
 
-bool JointNode::intersect(const glm::vec4 &eye, const glm::vec4 &ray) {
-	return false;
+Intersection* JointNode::intersect(const glm::vec4 &eye, const glm::vec4 &ray) {
+	return new Intersection();
 }
