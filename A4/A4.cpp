@@ -52,16 +52,14 @@ void A4_Render(
 	for (uint y = 0; y < h; ++y) {
 		for (uint x = 0; x < w; ++x) {
 			//std::cout << "x " << x << " y " << y << std::endl;
-
+//if(y==250&&x==100){
 			glm::vec3 ray = m_view + (-1 + (x + 0.5) / double(w) * 2) * tan(glm::radians(fovy / 2)) * double(w) / double(h) * m_side
 								+ (-1 + (y + 0.5) / double(h) * 2) * tan(glm::radians(fovy / 2)) * -m_up;
 			ray = glm::normalize(ray);
-			if(y==0&&x==0)
-			std::cout << glm::to_string(ray) <<std::endl;
+			//if(y==250&&x==100) std::cout << glm::to_string(ray) <<std::endl;
 
 			Intersection *intersection = root->intersect(glm::vec4(eye, 1), glm::vec4(ray, 0));
-			if(y==250&&x==100)
-			std::cout << glm::to_string(intersection->point) <<std::endl;
+			//if(y==250&&x==100) std::cout << glm::to_string(intersection->point) <<std::endl;
 
 			if (intersection != NULL && intersection->hit) {
 				// Ambient Reflection
@@ -101,7 +99,7 @@ void A4_Render(
 			}
 
 			delete intersection;
-
+//}
 			if (double(y * w + x + 1) / (h * w) * 100 >= (progress + 5)) {
 				progress += 5;
 				std::cout << "Progress : " << progress << "%" << std::endl;

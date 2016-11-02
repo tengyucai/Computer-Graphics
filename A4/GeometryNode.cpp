@@ -30,5 +30,7 @@ Intersection* GeometryNode::intersect(const glm::vec4 &eye, const glm::vec4 &ray
 	Intersection *intersection = m_primitive->intersect(glm::vec3(invtrans * eye), glm::vec3(invtrans * ray));
 	//return m_primitive->intersect(glm::vec3(eye), glm::vec3(ray));
 	intersection->material = m_material;
+	intersection->point = glm::vec3(trans * glm::vec4(intersection->point, 1));
+	intersection->normal = glm::vec3(glm::transpose(invtrans) * glm::vec4(intersection->normal, 0));
 	return intersection;
 }

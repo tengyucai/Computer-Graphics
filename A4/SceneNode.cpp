@@ -142,7 +142,7 @@ Intersection* SceneNode::intersect(const glm::vec4 &eye, const glm::vec4 &ray) {
 	float min_t = std::numeric_limits<float>::infinity();
 
 	for (SceneNode *child : children) {
-		tmp = child->intersect(eye, ray);
+		tmp = child->intersect(invtrans * eye, invtrans * ray);
 		if (tmp->hit && tmp->t < min_t) {
 			min_t = tmp->t;
 			delete intersection;
@@ -152,5 +152,7 @@ Intersection* SceneNode::intersect(const glm::vec4 &eye, const glm::vec4 &ray) {
 		}
 	}
 
+	intersection->point = glm::vec3(trans * glm::vec4(intersection->point, 1));
+	intersection->normal = glm::vec3(glm::transpose(invtrans) * glm::vec4(intersection->normal, 0));
 	return intersection;
 }

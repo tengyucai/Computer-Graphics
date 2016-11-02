@@ -2,6 +2,7 @@
 #include "polyroots.hpp"
 
 #include <iostream>
+#include <glm/ext.hpp>
 
 #define kEpsilon 0.00001
 
@@ -34,11 +35,15 @@ NonhierSphere::~NonhierSphere()
 }
 
 Intersection* NonhierSphere::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
+	// std::cout << "intersect Sphere: " << std::endl;
+	// std::cout << "eye " << glm::to_string(eye) << std::endl;
+	// std::cout << "ray " << glm::to_string(ray) << std::endl;
 	double roots[2];
 	double A = glm::dot(ray, ray);
 	double B = 2 * glm::dot(eye - m_pos, ray);
 	double C = glm::dot(eye - m_pos, eye - m_pos) - m_radius * m_radius;
 	size_t num = quadraticRoots(A, B, C, roots);
+	// std::cout << "A " << A << " B " << B << " C " << C << std::endl;
 
 	if (num == 0) {
 		return new Intersection();
@@ -87,6 +92,7 @@ Intersection* NonhierBox::intersect(const glm::vec3 &eye, const glm::vec3 &ray) 
 	if (tmin > tymax - kEpsilon && tmin < tymax + kEpsilon) normal = glm::vec3(0, -1, 0);
 	if (tmin > tzmin - kEpsilon && tmin < tzmin + kEpsilon) normal = glm::vec3(0, 0, 1);
 	if (tmin > tzmax - kEpsilon && tmin < tzmax + kEpsilon) normal = glm::vec3(0, 0, -1);
+
 	if (tmin > tmax || tmin < kEpsilon) return new Intersection();
 
 	glm::vec3 point = eye + tmin * ray;
