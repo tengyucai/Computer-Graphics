@@ -16,18 +16,20 @@ Intersection* Primitive::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
 
 Sphere::~Sphere()
 {
+	delete n_sphere;
 }
 
 Intersection* Sphere::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
-	return new Intersection();
+	return n_sphere->intersect(eye, ray);
 }
 
 Cube::~Cube()
 {
+	delete n_box;
 }
 
 Intersection* Cube::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
-	return new Intersection();
+	return n_box->intersect(eye, ray);
 }
 
 NonhierSphere::~NonhierSphere()

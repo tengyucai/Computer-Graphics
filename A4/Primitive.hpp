@@ -25,22 +25,6 @@ public:
   Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };
 
-class Sphere : public Primitive {
-public:
-  virtual ~Sphere();
-
-public:
-  Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
-};
-
-class Cube : public Primitive {
-public:
-  virtual ~Cube();
-
-public:
-  Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
-};
-
 class NonhierSphere : public Primitive {
 public:
   NonhierSphere(const glm::vec3& pos, double radius)
@@ -69,6 +53,30 @@ public:
 private:
   glm::vec3 m_pos;
   double m_size;
+
+public:
+  Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
+};
+
+class Sphere : public Primitive {
+public:
+  Sphere() : n_sphere(new NonhierSphere(glm::vec3(0, 0, 0), 1)) {};
+  virtual ~Sphere();
+
+private:
+  NonhierSphere *n_sphere;
+
+public:
+  Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
+};
+
+class Cube : public Primitive {
+public:
+  Cube() : n_box(new NonhierBox(glm::vec3(0, 0, 0), 1)) {};
+  virtual ~Cube();
+
+private:
+  NonhierBox *n_box;
 
 public:
   Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
