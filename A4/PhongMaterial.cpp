@@ -17,3 +17,7 @@ glm::vec3 PhongMaterial::getkd() {
 glm::vec3 PhongMaterial::getks() {
 	return m_ks;
 }
+
+double PhongMaterial::getShininess() {
+	return m_shininess;
+}

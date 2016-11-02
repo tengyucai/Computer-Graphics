@@ -6,7 +6,7 @@
 // #include "cs488-framework/ObjFileDecoder.hpp"
 #include "Mesh.hpp"
 
-#define kEpsilon 0.00001
+#define kEpsilon 0.001
 
 Mesh::Mesh( const std::string& fname )
 	: m_vertices()
@@ -102,41 +102,55 @@ std::ostream& operator<<(std::ostream& out, const Mesh& mesh)
 //     return true; // this ray hits the triangle 
 // }
 
-bool Mesh::rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &ray, 
+Intersection* Mesh::rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &ray, 
     const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2) {
   glm::vec3 e1, e2, h, s, q;
   float a, f, u, v, t;
+
   e1 = v1 - v0;
   e2 = v2 - v0;
 
   h = glm::cross(ray, e2);
   a = glm::dot(e1, h);
 
-  if (a > -kEpsilon && a < kEpsilon) return false;
+  if (a > -kEpsilon && a < kEpsilon) return new Intersection();
 
   f = 1 / a;
   s = eye - v0;
   u = f * glm::dot(s, h);
 
-  if (u < 0.0 || u > 1.0) return false;
+  if (u < 0.0 || u > 1.0) return new Intersection();
 
   q = glm::cross(s, e1);
   v = f * glm::dot(ray, q);
 
-  if (v < 0.0 || u + v > 1.0) return false;
+  if (v < 0.0 || u + v > 1.0) return new Intersection();
 
   t = f * glm::dot(e2, q);
 
-  if (t > kEpsilon) return true;
-  else return false;
+  if (t < kEpsilon) return new Intersection();
+  else {
+    glm::vec3 point = eye + t * ray;
+    glm::vec3 normal = glm::cross(e1, e2);
+    return new Intersection(true, t, point, normal);
+  }
 }
 
 Intersection* Mesh::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
-	int i = 0;
+  Intersection *intersection = new Intersection();
+  Intersection *tmp;
+  float min_t = std::numeric_limits<float>::infinity();;
+
   for (Triangle face : m_faces) {
-    bool hit = rayTriangleIntersect(eye, ray, m_vertices[face.v1], m_vertices[face.v2], m_vertices[face.v3]);
-    if (hit) return new Intersection();//Intersection(true, glm::vec3(), glm::vec3());
-    ++i;
+    tmp = rayTriangleIntersect(eye, ray, m_vertices[face.v1], m_vertices[face.v2], m_vertices[face.v3]);
+    if (tmp->hit && tmp->t < min_t) {
+      delete intersection;
+      intersection = tmp;
+      min_t = tmp->t;
+    } else {
+      delete tmp;
+    }
 	}
-	return new Intersection();
+
+	return intersection;
 }

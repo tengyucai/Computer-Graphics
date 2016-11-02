@@ -139,13 +139,16 @@ std::ostream & operator << (std::ostream & os, const SceneNode & node) {
 Intersection* SceneNode::intersect(const glm::vec4 &eye, const glm::vec4 &ray) {
 	Intersection *intersection = new Intersection();
 	Intersection *tmp;
-	float min_t = std::numeric_limits<float>::infinity();;
+	float min_t = std::numeric_limits<float>::infinity();
 
 	for (SceneNode *child : children) {
-		tmp = child->intersect(invtrans * eye, invtrans * ray);
+		tmp = child->intersect(eye, ray);
 		if (tmp->hit && tmp->t < min_t) {
 			min_t = tmp->t;
+			delete intersection;
 			intersection = tmp;
+		}else {
+			delete tmp;
 		}
 	}
 

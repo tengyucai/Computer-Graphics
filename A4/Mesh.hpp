@@ -34,6 +34,6 @@ private:
 
 public:
   Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
-  bool rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &ray, 
+  Intersection* rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &ray, 
   	const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2);
 };

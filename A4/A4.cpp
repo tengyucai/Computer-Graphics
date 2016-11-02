@@ -44,20 +44,24 @@ void A4_Render(
 	size_t w = image.width();
 
 	glm::vec3 m_view = glm::normalize(view);
-	glm::vec3 m_up = glm::normalize(up );
+	glm::vec3 m_up = glm::normalize(up);
 	glm::vec3 m_side = glm::normalize(glm::cross(m_view, m_up));
 
 	int progress = 0;
 	std::cout << "Progress : " << progress << "%" << std::endl;
 	for (uint y = 0; y < h; ++y) {
 		for (uint x = 0; x < w; ++x) {
+			//std::cout << "x " << x << " y " << y << std::endl;
 
 			glm::vec3 ray = m_view + (-1 + (x + 0.5) / double(w) * 2) * tan(glm::radians(fovy / 2)) * double(w) / double(h) * m_side
 								+ (-1 + (y + 0.5) / double(h) * 2) * tan(glm::radians(fovy / 2)) * -m_up;
 			ray = glm::normalize(ray);
+			if(y==0&&x==0)
+			std::cout << glm::to_string(ray) <<std::endl;
 
-			//std::cout << "eye " << glm::to_string(eye) << " ray " << glm::to_string(ray) << std::endl;
 			Intersection *intersection = root->intersect(glm::vec4(eye, 1), glm::vec4(ray, 0));
+			if(y==250&&x==100)
+			std::cout << glm::to_string(intersection->point) <<std::endl;
 
 			if (intersection != NULL && intersection->hit) {
 				// Ambient Reflection
@@ -67,35 +71,39 @@ void A4_Render(
 				image(x, y, 2) = ambient.z * material->getkd().z;
 
 				for(const Light * light : lights) {
-					//std::cout << "\t\t" <<  *light << std::endl;
-					float r = glm::length(light->position - intersection->point);
-					float falloff = light->falloff[0] + light->falloff[1] * r + light->falloff[2] * r * r;
+					float distance = glm::length(light->position - intersection->point);
+					float falloff = light->falloff[0] + light->falloff[1] * distance + light->falloff[2] * distance * distance;
+					glm::vec3 intensity = light->colour / falloff;
+
 					glm::vec3 normal = glm::normalize(intersection->normal);
 					glm::vec3 l = glm::normalize(light->position - intersection->point);
-					if (glm::dot(normal, l) > 0) { 
-						image(x, y, 0) += light->colour.x / falloff * material->getkd().x * glm::dot(normal, l);
-						image(x, y, 1) += light->colour.y / falloff * material->getkd().y * glm::dot(normal, l);
-						image(x, y, 2) += light->colour.z / falloff * material->getkd().z * glm::dot(normal, l);
 
-						glm::vec3 reflection = glm::normalize(2.0f * glm::dot(normal - l, normal) - l);
-						glm::vec3 v = glm::normalize(eye - intersection->point);
-						image(x, y, 0) += light->colour.x / falloff * material->getks().x * glm::dot(reflection, v);
-						image(x, y, 1) += light->colour.y / falloff * material->getks().y * glm::dot(reflection, v);
-						image(x, y, 2) += light->colour.z / falloff * material->getks().z * glm::dot(reflection, v);
+					if (glm::dot(normal, l) > 0) {
+						Intersection *s_intersection = root->intersect(glm::vec4(intersection->point, 1), glm::vec4(l, 0));
+
+						if (s_intersection == NULL || !s_intersection->hit) {
+							glm::vec3 diffusion = intensity * material->getkd() * glm::dot(normal, l);
+
+							glm::vec3 reflection = 2.0f * glm::dot(normal, l) * normal - l;
+							glm::vec3 v = glm::normalize(eye - intersection->point);
+							glm::vec3 specular = intensity * material->getks() * pow(glm::dot(reflection, v), material->getShininess());
+
+							image(x, y, 0) += diffusion.x + specular.x;
+							image(x, y, 1) += diffusion.y + specular.y;
+							image(x, y, 2) += diffusion.z + specular.z;
+						}
+
+						delete s_intersection;
 					}
 				}
 			} else {
-				// Red: increasing from top to bottom
-				image(x, y, 0) = (double)y / h;
-				// Green: increasing from left to right
-				image(x, y, 1) = (double)x / w;
-				// Blue: in lower-left and upper-right corners
-				image(x, y, 2) = ((y < h/2 && x < w/2)
-							  || (y >= h/2 && x >= w/2)) ? 1.0 : 0.0;
+				image(x, y, 2) = (double)y / h;
 			}
 
-			if (((y+1) * w + (x+1)) / (h * w) * 100 >= (progress + 10)) {
-				progress += 10;
+			delete intersection;
+
+			if (double(y * w + x + 1) / (h * w) * 100 >= (progress + 5)) {
+				progress += 5;
 				std::cout << "Progress : " << progress << "%" << std::endl;
 			}
 		}

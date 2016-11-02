@@ -18,4 +18,5 @@ private:
 public:
 	glm::vec3 getkd();
 	glm::vec3 getks();
+	double getShininess();
 };
