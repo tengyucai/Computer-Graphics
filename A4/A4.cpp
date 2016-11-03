@@ -48,7 +48,7 @@ void A4_Render(
 	glm::vec3 m_side = glm::normalize(glm::cross(m_view, m_up));
 
 	int progress = 0;
-	std::cout << "Progress : " << progress << "%" << std::endl;
+	std::cout << "Progress : " << progress << " %" << std::endl;
 	for (uint y = 0; y < h; ++y) {
 		for (uint x = 0; x < w; ++x) {
 			//std::cout << "x " << x << " y " << y << std::endl;
@@ -102,7 +102,7 @@ void A4_Render(
 //}
 			if (double(y * w + x + 1) / (h * w) * 100 >= (progress + 5)) {
 				progress += 5;
-				std::cout << "Progress : " << progress << "%" << std::endl;
+				std::cout << "Progress : " << progress << " %" << std::endl;
 			}
 		}
 	}

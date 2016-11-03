@@ -1,5 +1,8 @@
 #include "GeometryNode.hpp"
 
+#include <iostream>
+#include <glm/ext.hpp>
+
 //---------------------------------------------------------------------------------------
 GeometryNode::GeometryNode(
 	const std::string & name, Primitive *prim, Material *mat )
@@ -32,5 +35,6 @@ Intersection* GeometryNode::intersect(const glm::vec4 &eye, const glm::vec4 &ray
 	intersection->material = m_material;
 	intersection->point = glm::vec3(trans * glm::vec4(intersection->point, 1));
 	intersection->normal = glm::vec3(glm::transpose(invtrans) * glm::vec4(intersection->normal, 0));
+	// if (intersection->hit) std::cout << glm::to_string(intersection->normal) << std::endl;
 	return intersection;
 }

@@ -52,7 +52,7 @@ Intersection* NonhierSphere::intersect(const glm::vec3 &eye, const glm::vec3 &ra
 	} else {
 		float t = roots[0];
 		if (num == 2 && roots[1] < roots[0]) t = roots[1];
-		if (t < 0) return new Intersection();
+		if (t < kEpsilon) return new Intersection();
 		glm::vec3 point = eye + t * ray;
 		glm::vec3 normal = point - m_pos;
 		return new Intersection(true, t, point, normal);
@@ -64,6 +64,7 @@ NonhierBox::~NonhierBox()
 }
 
 Intersection* NonhierBox::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
+	// std::cout << "m_pos " << glm::to_string(m_pos) << std::endl;
 	glm::vec3 bounds[2];
 	int sign[3];
 
@@ -88,16 +89,21 @@ Intersection* NonhierBox::intersect(const glm::vec3 &eye, const glm::vec3 &ray) 
 	tmax = glm::min(glm::min(txmax, tymax), tzmax);
 
 	glm::vec3 normal;
-	if (tmin > txmin - kEpsilon && tmin < txmin + kEpsilon) normal = glm::vec3(1, 0, 0);
-	if (tmin > txmax - kEpsilon && tmin < txmax + kEpsilon) normal = glm::vec3(-1, 0, 0);
-	if (tmin > tymin - kEpsilon && tmin < tymin + kEpsilon) normal = glm::vec3(0, 1, 0);
-	if (tmin > tymax - kEpsilon && tmin < tymax + kEpsilon) normal = glm::vec3(0, -1, 0);
-	if (tmin > tzmin - kEpsilon && tmin < tzmin + kEpsilon) normal = glm::vec3(0, 0, 1);
-	if (tmin > tzmax - kEpsilon && tmin < tzmax + kEpsilon) normal = glm::vec3(0, 0, -1);
+	if (tmin > txmin - kEpsilon && tmin < txmin + kEpsilon) normal = glm::vec3(1, 0, 0) * (2 * sign[0] - 1);
+	if (tmin > txmax - kEpsilon && tmin < txmax + kEpsilon) normal = glm::vec3(-1, 0, 0) * (2 * sign[0] - 1);
+	if (tmin > tymin - kEpsilon && tmin < tymin + kEpsilon) normal = glm::vec3(0, 1, 0) * (2 * sign[1] - 1);
+	if (tmin > tymax - kEpsilon && tmin < tymax + kEpsilon) normal = glm::vec3(0, -1, 0) * (2 * sign[1] - 1);
+	if (tmin > tzmin - kEpsilon && tmin < tzmin + kEpsilon) normal = glm::vec3(0, 0, 1) * (2 * sign[2] - 1);
+	if (tmin > tzmax - kEpsilon && tmin < tzmax + kEpsilon) normal = glm::vec3(0, 0, -1) * (2 * sign[2] - 1);
 
 	if (tmin > tmax || tmin < kEpsilon) return new Intersection();
 
 	glm::vec3 point = eye + tmin * ray;
+	// std::cout << "eye " << glm::to_string(eye) << std::endl;
+	// std::cout << "ray " << glm::to_string(ray) << std::endl;
+	// std::cout << "point " << glm::to_string(point) << std::endl;
+	// std::cout << "tzmin " << tzmin << " tzmax " << tzmax << std::endl;
+	// std::cout << "normal " << glm::to_string(normal) << std::endl;
 
 	return new Intersection(true, tmin, point, normal);
 }
