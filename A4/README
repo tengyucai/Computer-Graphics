@@ -1,0 +1,28 @@
+Assignment 4
+
+Name:		Tengyu Cai
+Student #: 	20494373
+Student id: t7cai
+
+The final executable was compiled on machine gl33
+
+# Compilation
+Run the following commands to compile the program:
+	$ premake4 gmake
+	$ make
+
+Run the following command to invoke the program:
+	$ ./A3 Assets/lua_file_name
+  (Note: need to run the program in A3 directory and pass the lua file with "Assets/" as prefix)
+
+# Manual
+Background:
+I use a background image 'background.png' to be mapped as the default background.
+
+Acceleration:
+I use bounded box to bound each mesh and use an intersection check with the bounded box first before doing intersect with the mesh.
+
+Extra features are as followed:
+	1. Antialiasing: I use supersampling to generate 9 rays for each pixel, sample on a 3x3 grid over the area of the pixel and take the average of the nine colour for the output.
+  2. Mirror reflection: I issue secondary flection rays from the point of intersection 10 times and I assume that a phone material with shininess of 128 is purly reflective. For each reflection, I use the following formula to calculate the light: 
+    colour = colour * (128 - shininess / 128) +  reflection_colour * shininess / 128;
