@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <limits>
 
 #include <glm/ext.hpp>
 
@@ -15,17 +16,38 @@ Mesh::Mesh( const std::string& fname )
 	std::string code;
 	double vx, vy, vz;
 	size_t s1, s2, s3;
+  double xmin = std::numeric_limits<double>::max();
+  double xmax = -std::numeric_limits<double>::max();
+  double ymin = std::numeric_limits<double>::max();
+  double ymax = -std::numeric_limits<double>::max();
+  double zmin = std::numeric_limits<double>::max();
+  double zmax = -std::numeric_limits<double>::max();
+  std::cout << xmin << " " << xmax << " " << ymin << " " << ymax << " " << zmin << " " << zmax << std::endl;
+  is_plane = false;
 
 	std::ifstream ifs( fname.c_str() );
 	while( ifs >> code ) {
 		if( code == "v" ) {
 			ifs >> vx >> vy >> vz;
+
+      xmin = fmin(xmin, vx);
+      xmax = fmax(xmax, vx);
+      ymin = fmin(ymin, vy);
+      ymax = fmax(ymax, vy);
+      zmin = fmin(zmin, vz);
+      zmax = fmax(zmax, vz);
 			m_vertices.push_back( glm::vec3( vx, vy, vz ) );
 		} else if( code == "f" ) {
 			ifs >> s1 >> s2 >> s3;
 			m_faces.push_back( Triangle( s1 - 1, s2 - 1, s3 - 1 ) );
 		}
 	}
+
+  is_plane = (fabs(xmax - xmin) < kEpsilon) || (fabs(ymax - ymin) < kEpsilon) || (fabs(zmax - zmin) < kEpsilon);
+  double size = fmax(xmax - xmin, fmax(ymax - ymin, zmax - zmin));
+  // b_box = new NonhierBox(glm::vec3(xmin, ymin, zmin), size);
+  b_box = new BoundedBox(xmin, xmax, ymin, ymax, zmin, zmax);
+  std::cout << xmin << " " << xmax << " " << ymin << " " << ymax << " " << zmin << " " << zmax << std::endl;
 }
 
 std::ostream& operator<<(std::ostream& out, const Mesh& mesh)
@@ -48,59 +70,6 @@ std::ostream& operator<<(std::ostream& out, const Mesh& mesh)
   out << "}";
   return out;
 }
-
-// bool Mesh::rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &ray, 
-//   	const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2) {
-//     // compute plane's normal
-//     glm::vec3 v0v1 = v1 - v0; 
-//     glm::vec3 v0v2 = v2 - v0; 
-//     // no need to normalize
-//     glm::vec3 N = glm::cross(v0v1, v0v2); // N 
-//     float area2 = N.length(); 
- 
-//     // Step 1: finding P
- 
-//     // check if ray and plane are parallel ?
-//     float NdotRayDirection = glm::dot(N, ray); 
-//     if (fabs(NdotRayDirection) < kEpsilon) // almost 0 
-//         return false; // they are parallel so they don't intersect ! 
-//     std::cout << "false" << std::endl;
-//     // compute d parameter using equation 2
-//     float d = glm::dot(N, v0); 
- 
-//     // compute t (equation 3)
-//     float t = (glm::dot(N, eye) + d) / NdotRayDirection; 
-//     // check if the triangle is in behind the ray
-//     if (t < 0) return false; // the triangle is behind 
-//     std::cout << "false" << std::endl;
- 
-//     // compute the intersection point using equation 1
-//     glm::vec3 P = eye + t * ray; 
- 
-//     // Step 2: inside-outside test
-//     glm::vec3 C; // vector perpendicular to triangle's plane 
- 
-//     // edge 0
-//     glm::vec3 edge0 = v1 - v0; 
-//     glm::vec3 vp0 = P - v0; 
-//     C = glm::cross(edge0, vp0); 
-//     if (glm::dot(N, C) < 0) return false; // P is on the right side 
-//     std::cout << "false" << std::endl;
-
-//     // edge 1
-//     glm::vec3 edge1 = v2 - v1; 
-//     glm::vec3 vp1 = P - v1; 
-//     C = glm::cross(edge1, vp1); 
-//     if (glm::dot(N, C) < 0)  return false; // P is on the right side 
-//     std::cout << "false" << std::endl;
-//     // edge 2
-//     glm::vec3 edge2 = v0 - v2; 
-//     glm::vec3 vp2 = P - v2; 
-//     C = glm::cross(edge2, vp2); 
-//     if (glm::dot(N, C) < 0) return false; // P is on the right side; 
-//     std::cout << "false" << std::endl;
-//     return true; // this ray hits the triangle 
-// }
 
 Intersection* Mesh::rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &ray, 
     const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2) {
@@ -138,6 +107,12 @@ Intersection* Mesh::rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &
 
 Intersection* Mesh::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
   Intersection *intersection = new Intersection();
+  if (!is_plane) {
+    Intersection *bbox_intersection = b_box->intersect(eye, ray);
+    if (!bbox_intersection->hit) return intersection;
+    // else return intersection;
+  }
+    
   Intersection *tmp;
   float min_t = std::numeric_limits<float>::infinity();;
 
@@ -151,6 +126,5 @@ Intersection* Mesh::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
       delete tmp;
     }
 	}
-
 	return intersection;
 }

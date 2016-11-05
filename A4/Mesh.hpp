@@ -27,8 +27,10 @@ public:
   Mesh( const std::string& fname );
   
 private:
+	BoundedBox *b_box;
 	std::vector<glm::vec3> m_vertices;
 	std::vector<Triangle> m_faces;
+	bool is_plane;
 
     friend std::ostream& operator<<(std::ostream& out, const Mesh& mesh);
 
