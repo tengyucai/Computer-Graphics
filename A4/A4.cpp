@@ -76,8 +76,8 @@ void A4_Render(
 		for (uint x = 0; x < w; ++x) {
 
 			glm::vec3 c = glm::vec3(0, 0, 0);
-			for (int i = 0; i <= SAMPLE_SIZE; ++i) {
-				for (int j = 0; j <= SAMPLE_SIZE; ++j) {
+			for (int i = 0; i < SAMPLE_SIZE; ++i) {
+				for (int j = 0; j < SAMPLE_SIZE; ++j) {
 					glm::vec3 ray = m_view + (-1 + (x + 0.2 + i*0.3) / double(w) * 2) * tan(glm::radians(fovy / 2)) * double(w) / double(h) * m_side
 										+ (-1 + (y + 0.2 + j*0.3) / double(h) * 2) * tan(glm::radians(fovy / 2)) * -m_up;
 					ray = glm::normalize(ray);
@@ -86,7 +86,7 @@ void A4_Render(
 
 					if (intersection != NULL && intersection->hit) {
 
-						glm::vec3 colour = getLights(root, lights, ambient, eye, -1.0*ray, intersection, 10);
+						glm::vec3 colour = getLights(root, lights, ambient, eye, -1.0*ray, intersection, 3);
 
 						c += colour;
 					} else {
@@ -170,9 +170,9 @@ glm::vec3 getLights(
 					g = g / 128 + reflection.y;
 					b = b / 128 + reflection.z;
 				} else {
-					r = r * ((128 - material->getShininess()) / 128) +  reflection.x * (material->getShininess() / 128);
-					g = g * ((128 - material->getShininess()) / 128) +  reflection.y * (material->getShininess() / 128);
-					b = b * ((128 - material->getShininess()) / 128) +  reflection.z * (material->getShininess() / 128);
+					r = r * ((128 - material->getShininess()) / 128) + reflection.x * (material->getShininess() / 128);
+					g = g * ((128 - material->getShininess()) / 128) + reflection.y * (material->getShininess() / 128);
+					b = b * ((128 - material->getShininess()) / 128) + reflection.z * (material->getShininess() / 128);
 				}
 			}
 

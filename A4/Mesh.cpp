@@ -22,7 +22,6 @@ Mesh::Mesh( const std::string& fname )
   double ymax = -std::numeric_limits<double>::max();
   double zmin = std::numeric_limits<double>::max();
   double zmax = -std::numeric_limits<double>::max();
-  std::cout << xmin << " " << xmax << " " << ymin << " " << ymax << " " << zmin << " " << zmax << std::endl;
   is_plane = false;
 
 	std::ifstream ifs( fname.c_str() );
@@ -47,7 +46,6 @@ Mesh::Mesh( const std::string& fname )
   double size = fmax(xmax - xmin, fmax(ymax - ymin, zmax - zmin));
   // b_box = new NonhierBox(glm::vec3(xmin, ymin, zmin), size);
   b_box = new BoundedBox(xmin, xmax, ymin, ymax, zmin, zmax);
-  std::cout << xmin << " " << xmax << " " << ymin << " " << ymax << " " << zmin << " " << zmax << std::endl;
 }
 
 std::ostream& operator<<(std::ostream& out, const Mesh& mesh)

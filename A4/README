@@ -4,7 +4,7 @@ Name:		Tengyu Cai
 Student #: 	20494373
 Student id: t7cai
 
-The final executable was compiled on machine gl33
+The final executable was compiled on machine gl11
 
 # Compilation
 Run the following commands to compile the program:
@@ -21,6 +21,19 @@ I use a background image 'background.png' to be mapped as the default background
 
 Acceleration:
 I use bounded box to bound each mesh and use an intersection check with the bounded box first before doing intersect with the mesh.
+For nonhier.lua:
+*before acceleration:
+	real	0m54.260s
+	user	0m54.220s
+	sys		0m0.008s
+*after acceleration:
+	real	0m26.871s
+	user	0m26.796s
+	sys		0m0.052s
+
+
+Sample scene:
+Two object reflected in the floor as well as the far plane.
 
 Extra features are as followed:
 	1. Antialiasing: I use supersampling to generate 9 rays for each pixel, sample on a 3x3 grid over the area of the pixel and take the average of the nine colour for the output.

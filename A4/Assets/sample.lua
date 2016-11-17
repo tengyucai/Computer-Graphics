@@ -55,16 +55,16 @@ scene:add_child(poly)
 poly:translate(-2, 1.618034, 0)
 poly:set_material(blue)
 
-steldodec = gr.mesh( 'dodec', 'Assets/smstdodeca.obj' )
-steldodec:set_material(gold)
-scene:add_child(steldodec)
-steldodec:scale(0.6, 0.6, 0.6)
-steldodec:translate(100, -100, -40)
+-- steldodec = gr.mesh( 'dodec', 'Assets/smstdodeca.obj' )
+-- steldodec:set_material(gold)
+-- scene:add_child(steldodec)
+-- steldodec:scale(0.6, 0.6, 0.6)
+-- steldodec:translate(100, -100, -40)
 
 -- The lights
 l1 = gr.light({200,200,400}, {0.8, 0.8, 0.8}, {1, 0, 0})
 l2 = gr.light({0, 5, -20}, {0.4, 0.4, 0.8}, {1, 0, 0})
 
-gr.render(scene, 'sample.png', 256, 256, 
+gr.render(scene, 'sample.png', 512, 512, 
 	  {0, 0, 0,}, {0, 0, -1}, {0, 1, 0}, 50,
 	  {0.4, 0.4, 0.4}, {l1, l2})
