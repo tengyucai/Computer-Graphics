@@ -291,9 +291,11 @@ int gr_light_cmd(lua_State* L)
   get_tuple(L, 1, &l.position[0], 3);
   get_tuple(L, 2, col, 3);
   get_tuple(L, 3, l.falloff, 3);
+  double power = luaL_checknumber(L, 4);
 
   l.colour = glm::vec3(col[0], col[1], col[2]);
-  
+  l.power = power;
+
   data->light = new Light(l);
 
   luaL_newmetatable(L, "gr.light");

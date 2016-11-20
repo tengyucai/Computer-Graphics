@@ -5,7 +5,7 @@
 // Henrik Wann Jensen - February 2001
 //----------------------------------------------------------------------------
 
-#include "PhotonMap.h"
+#include "PhotonMap.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

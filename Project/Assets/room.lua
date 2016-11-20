@@ -43,8 +43,8 @@ s1 = gr.nh_sphere('s1', {0, -50, 200}, 100)
 scene:add_child(s1)
 s1:set_material(mat3)
 
-white_light = gr.light({50, 50, 400}, {0.6, 0.6, 0.6}, {1, 0, 0})
-white_light2 = gr.light({100.0, -100.0, 150.0}, {0.9, 0.9, 0.9}, {1, 0, 0})
+white_light = gr.light({50, 50, 400}, {0.6, 0.6, 0.6}, {1, 0, 0}, 10000)
+white_light2 = gr.light({100.0, -100.0, 150.0}, {0.9, 0.9, 0.9}, {1, 0, 0}, 10000)
 
 gr.render(scene, 'test.png', 256, 256,
 	  {0, 0, 800}, {0, 0, -800}, {0, 1, 0}, 50,
