@@ -93,3 +93,12 @@ private:
 public:
   Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };
+
+class Cylinder : public Primitive {
+public:
+  Cylinder() {};
+  virtual ~Cylinder();
+
+public:
+  Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
+};

@@ -90,12 +90,15 @@ void A4_Render(
 
 						c += colour;
 					} else {
-						int bg_x = (float)bg_width / w * x;
-						int bg_y = (float)bg_height / h * y;
+						// int bg_x = (float)bg_width / w * x;
+						// int bg_y = (float)bg_height / h * y;
 
-						c.x += (float)background[4*(bg_y * bg_width + bg_x)] / 255;
-						c.y += (float)background[4*(bg_y * bg_width + bg_x) + 1] / 255;
-						c.z += (float)background[4*(bg_y * bg_width + bg_x) + 2] / 255;
+						// c.x += (float)background[4*(bg_y * bg_width + bg_x)] / 255;
+						// c.y += (float)background[4*(bg_y * bg_width + bg_x) + 1] / 255;
+						// c.z += (float)background[4*(bg_y * bg_width + bg_x) + 2] / 255;
+						c.x = 0;
+						c.y = 0;
+						c.z = 0;
 					}
 
 					delete intersection;

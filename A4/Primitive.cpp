@@ -147,3 +147,83 @@ Intersection* NonhierBox::intersect(const glm::vec3 &eye, const glm::vec3 &ray) 
 	// return new Intersection(true, tmin, point, normal);
 	return b_box->intersect(eye, ray);
 }
+
+Cylinder::~Cylinder()
+{
+}
+
+Intersection* Cylinder::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
+	double roots[2];
+	double A = ray.x * ray.x + ray.z * ray.z;
+	double B = 2 * eye.x * ray.x + 2 * eye.z + ray.z;
+	double C = eye.x * eye.x + eye.z * eye.z - 1;
+	size_t num = quadraticRoots(A, B, C, roots);
+
+	if (num == 0) {
+		return new Intersection();
+	} else if (num == 1) {
+		double t = roots[0];
+		double y = eye.y + t * ray.y;
+		if (y >= -1 && y <= 1) {
+			glm::vec3 point = eye + t * ray;
+			glm::vec3 normal = glm::normalize(glm::vec3(point.x, 0, point.z));
+			return new Intersection(true, t, point, normal);
+		} else {
+			return new Intersection();
+		}
+	} else if (num == 2) {
+		double t0 = std::min(roots[0], roots[1]);
+		double t1 = std::max(roots[0], roots[1]);
+
+		double y0 = eye.y + t0 * ray.y;
+		double y1 = eye.y + t1 * ray.y;
+		std::cout << "y0 " << y0 << " y1 " << y1 << std::endl;
+
+		if (y0 < -1) {
+			if (y1 < -1) { // Miss
+				return new Intersection();
+			} else { // Hits the cap at -1
+				float th = t0 + (t1 - t0) * (y0 + 1) / (y0 - y1);
+				if (th <= 0) {
+					return new Intersection();
+				} else {
+					glm::vec3 point = eye + th * ray;
+					glm::vec3 normal = glm::vec3(0, -1, 0);
+					std::cout << "eye " << to_string(eye) << " ray " << to_string(ray) << std::endl;
+					std::cout << "point " << to_string(point) << " normal " << to_string(normal) << std::endl;
+					return new Intersection(true, th, point, normal);
+				}
+			}
+		} else if (y0 >= -1 && y0 <= 1) {
+			// Hit the cylinder bit
+			if (t0 <= 0) {
+				return new Intersection();
+			} else {
+				glm::vec3 point = eye + t0 * ray;
+				glm::vec3 normal = glm::normalize(glm::vec3(point.x, 0, point.z));
+				std::cout << "eye " << to_string(eye) << " ray " << to_string(ray) << std::endl;
+				std::cout << "point " << to_string(point) << " normal " << to_string(normal) << std::endl;
+				return new Intersection(true, t0, point, normal);
+			}
+		} else if (y0 > 1) {
+			if (y1 > 1) {
+				return new Intersection();
+			} else {
+				// Hit the cap
+				float th = t0 + (t1 - t0) * (y0 - 1) / (y0 - y1);
+				if (th <= 0) {
+					return new Intersection();
+				} else {
+					glm::vec3 point = eye + th * ray;
+					glm::vec3 normal = glm::vec3(0, 1, 0);
+					std::cout << "eye " << to_string(eye) << " ray " << to_string(ray) << std::endl;
+					std::cout << "point " << to_string(point) << " normal " << to_string(normal) << std::endl;
+					return new Intersection(true, th, point, normal);
+				}
+			}
+		}
+	}
+
+	return new Intersection();
+}
+
