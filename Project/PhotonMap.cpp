@@ -11,6 +11,9 @@
 #include <string.h>
 #include <math.h>
 
+#include <iostream>
+using namespace std;
+
 /* This is the constructor for the photon map.
  * To create the photon map it is necessary to specify the
  * maximum number of photons that will be stored
@@ -253,6 +256,9 @@ void Photon_map :: store(
     node->phi = (unsigned char)(phi+256);
   else
     node->phi = (unsigned char)phi;
+
+	// cout << "pos (" << pos[0] << " " << pos[1] << " " << pos[2] << ") power ("
+	// 	<< power[0] << " " << power[1] << " " << power[2] << ")" << endl;
 }
 
 /* scale_photon_power is used to scale the power of all
