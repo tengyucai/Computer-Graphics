@@ -1,12 +1,13 @@
 #include "PhongMaterial.hpp"
 
 PhongMaterial::PhongMaterial(
-	const glm::vec3& kd, const glm::vec3& ks, const glm::vec3& kt, double shininess )
+	const glm::vec3& kd, const glm::vec3& ks, double shininess, 
+	double transparency, double refraction_index )
 	: m_kd(kd)
 	, m_ks(ks)
-	, m_kt(kt)
+	, m_transparency(transparency)
 	, m_shininess(shininess)
-	, m_refraction_index(1.0f)
+	, m_refraction_index(refraction_index)
 {}
 
 PhongMaterial::~PhongMaterial()
@@ -18,10 +19,6 @@ glm::vec3 PhongMaterial::getkd() {
 
 glm::vec3 PhongMaterial::getks() {
 	return m_ks;
-}
-
-glm::vec3 PhongMaterial::getkt() {
-	return m_kt;
 }
 
 double PhongMaterial::getShininess() {
@@ -37,7 +34,11 @@ bool PhongMaterial::isSpecular() {
 }
 
 bool PhongMaterial::isTransparent() {
-	return m_kt.x > 0.0f || m_kt.y > 0.0f || m_kt.z > 0.0f;
+	return m_transparency > 0;
+}
+
+double PhongMaterial::getTransparency() {
+	return m_transparency;
 }
 
 double PhongMaterial::getRefractionIndex() {
