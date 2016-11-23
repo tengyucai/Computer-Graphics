@@ -361,16 +361,18 @@ int gr_material_cmd(lua_State* L)
   gr_material_ud* data = (gr_material_ud*)lua_newuserdata(L, sizeof(gr_material_ud));
   data->material = 0;
   
-  double kd[3], ks[3], kt[3] = {0.0f, 0.0f, 0.0f};
+  double kd[3], ks[3];
   get_tuple(L, 1, kd, 3);
   get_tuple(L, 2, ks, 3);
 
   double shininess = luaL_checknumber(L, 3);
-  
+  double transparency = luaL_checknumber(L, 4);
+
   data->material = new PhongMaterial(glm::vec3(kd[0], kd[1], kd[2]),
                                      glm::vec3(ks[0], ks[1], ks[2]),
-                                     glm::vec3(kt[0], kt[1], kt[2]),
-                                     shininess);
+                                     shininess,
+                                     transparency,
+                                     1.0);
 
   luaL_newmetatable(L, "gr.material");
   lua_setmetatable(L, -2);
