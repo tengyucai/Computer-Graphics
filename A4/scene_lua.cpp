@@ -50,6 +50,7 @@
 #include "Mesh.hpp"
 #include "GeometryNode.hpp"
 #include "JointNode.hpp"
+#include "CSGNode.hpp"
 #include "Primitive.hpp"
 #include "Material.hpp"
 #include "PhongMaterial.hpp"
@@ -291,6 +292,96 @@ int gr_mesh_cmd(lua_State* L)
 	lua_setmetatable(L, -2);
 
 	return 1;
+}
+
+// Create a CSG union node
+extern "C"
+int gr_csg_union_node(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+
+  gr_node_ud* data = (gr_node_ud*)lua_newuserdata(L, sizeof(gr_node_ud));
+  data->node = 0;
+
+  const char* name = luaL_checkstring(L, 1);
+
+  gr_node_ud* nodedata_a = (gr_node_ud*)luaL_checkudata(L, 2, "gr.node");
+  luaL_argcheck(L, nodedata_a != 0, 2, "Node expected");
+  GeometryNode *node_a = (GeometryNode *)nodedata_a->node;
+  luaL_argcheck(L, node_a, 2, "Geometry node expected");
+
+  gr_node_ud* nodedata_b = (gr_node_ud*)luaL_checkudata(L, 3, "gr.node");
+  luaL_argcheck(L, nodedata_b != 0, 3, "Node expected");
+  GeometryNode *node_b = (GeometryNode *)nodedata_b->node;
+  luaL_argcheck(L, node_b, 3, "Geometry node expected");
+
+  UnionNode* node = new UnionNode(name, node_a, node_b);
+  data->node = node;
+
+  luaL_getmetatable(L, "gr.node");
+  lua_setmetatable(L, -2);
+
+  return 1;
+}
+
+// Create a CSG intersection node
+extern "C"
+int gr_csg_intersection_node(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+
+  gr_node_ud* data = (gr_node_ud*)lua_newuserdata(L, sizeof(gr_node_ud));
+  data->node = 0;
+
+  const char* name = luaL_checkstring(L, 1);
+
+  gr_node_ud* nodedata_a = (gr_node_ud*)luaL_checkudata(L, 2, "gr.node");
+  luaL_argcheck(L, nodedata_a != 0, 2, "Node expected");
+  GeometryNode *node_a = (GeometryNode *)nodedata_a->node;
+  luaL_argcheck(L, node_a, 2, "Geometry node expected");
+
+  gr_node_ud* nodedata_b = (gr_node_ud*)luaL_checkudata(L, 3, "gr.node");
+  luaL_argcheck(L, nodedata_b != 0, 3, "Node expected");
+  GeometryNode *node_b = (GeometryNode *)nodedata_b->node;
+  luaL_argcheck(L, node_b, 3, "Geometry node expected");
+
+  IntersectionNode* node = new IntersectionNode(name, node_a, node_b);
+  data->node = node;
+
+  luaL_getmetatable(L, "gr.node");
+  lua_setmetatable(L, -2);
+
+  return 1;
+}
+
+// Create a CSG difference node
+extern "C"
+int gr_csg_difference_node(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+
+  gr_node_ud* data = (gr_node_ud*)lua_newuserdata(L, sizeof(gr_node_ud));
+  data->node = 0;
+
+  const char* name = luaL_checkstring(L, 1);
+
+  gr_node_ud* nodedata_a = (gr_node_ud*)luaL_checkudata(L, 2, "gr.node");
+  luaL_argcheck(L, nodedata_a != 0, 2, "Node expected");
+  GeometryNode *node_a = (GeometryNode *)nodedata_a->node;
+  luaL_argcheck(L, node_a, 2, "Geometry node expected");
+
+  gr_node_ud* nodedata_b = (gr_node_ud*)luaL_checkudata(L, 3, "gr.node");
+  luaL_argcheck(L, nodedata_b != 0, 3, "Node expected");
+  GeometryNode *node_b = (GeometryNode *)nodedata_b->node;
+  luaL_argcheck(L, node_b, 3, "Geometry node expected");
+
+  DifferenceNode* node = new DifferenceNode(name, node_a, node_b);
+  data->node = node;
+
+  luaL_getmetatable(L, "gr.node");
+  lua_setmetatable(L, -2);
+
+  return 1;
 }
 
 // Make a point light
@@ -542,6 +633,9 @@ static const luaL_Reg grlib_functions[] = {
   {"nh_sphere", gr_nh_sphere_cmd},
   {"nh_box", gr_nh_box_cmd},
   {"mesh", gr_mesh_cmd},
+  {"union", gr_csg_union_node},
+  {"intersection", gr_csg_intersection_node},
+  {"difference", gr_csg_difference_node},
   {"light", gr_light_cmd},
   {"render", gr_render_cmd},
   {0, 0}

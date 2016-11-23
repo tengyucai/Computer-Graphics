@@ -86,7 +86,7 @@ void A4_Render(
 
 					if (intersection != NULL && intersection->hit) {
 
-						glm::vec3 colour = getLights(root, lights, ambient, eye, -1.0*ray, intersection, 3);
+						glm::vec3 colour = getLights(root, lights, ambient, eye, -1.0*ray, intersection, 1);
 
 						c += colour;
 					} else {
@@ -143,7 +143,8 @@ glm::vec3 getLights(
 		if (glm::dot(normal, l) > -kEpsilon) {
 			Intersection *s_intersection = root->intersect(glm::vec4(intersection->point, 1), glm::vec4(l, 0));
 
-			if (s_intersection == NULL || !s_intersection->hit) {
+			if (s_intersection == NULL || !s_intersection->hit ||
+				glm::dot(intersection->point - s_intersection->point, s_intersection->normal) < 0) {
 				glm::vec3 diffusion = intensity * material->getkd() * glm::dot(normal, l);
 
 				glm::vec3 reflection = 2.0f * glm::dot(normal, l) * normal - l;

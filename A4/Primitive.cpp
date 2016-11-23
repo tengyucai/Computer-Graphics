@@ -50,8 +50,10 @@ Intersection* NonhierSphere::intersect(const glm::vec3 &eye, const glm::vec3 &ra
 	if (num == 0) {
 		return new Intersection();
 	} else {
-		float t = roots[0];
-		if (num == 2 && roots[1] < roots[0]) t = roots[1];
+		double min = std::min<double>(roots[0], roots[1]);
+		double t = (num == 1) ? roots[0] : ((min < 0) ? std::max<double>(roots[0], roots[1]) : min);
+		// float t = roots[0];
+		// if (num == 2 && roots[1] < roots[0]) t = roots[1];
 		if (t < kEpsilon) return new Intersection();
 		glm::vec3 point = eye + t * ray;
 		glm::vec3 normal = point - m_pos;
@@ -89,6 +91,10 @@ Intersection* BoundedBox::intersect(const glm::vec3 &eye, const glm::vec3 &ray) 
 	tmin = glm::max(glm::max(txmin, tymin), tzmin);
 	tmax = glm::min(glm::min(txmax, tymax), tzmax);
 
+	// if (tmin > tmax || tmin < -kEpsilon) return new Intersection();
+	if (tmin > tmax || (tmin < kEpsilon && tmax < kEpsilon)) return new Intersection();
+	else if (tmin < kEpsilon) tmin = tmax;
+
 	glm::vec3 normal;
 	if (tmin > txmin - kEpsilon && tmin < txmin + kEpsilon) normal = glm::vec3(1, 0, 0) * (2 * sign[0] - 1);
 	if (tmin > txmax - kEpsilon && tmin < txmax + kEpsilon) normal = glm::vec3(-1, 0, 0) * (2 * sign[0] - 1);
@@ -96,8 +102,6 @@ Intersection* BoundedBox::intersect(const glm::vec3 &eye, const glm::vec3 &ray) 
 	if (tmin > tymax - kEpsilon && tmin < tymax + kEpsilon) normal = glm::vec3(0, -1, 0) * (2 * sign[1] - 1);
 	if (tmin > tzmin - kEpsilon && tmin < tzmin + kEpsilon) normal = glm::vec3(0, 0, 1) * (2 * sign[2] - 1);
 	if (tmin > tzmax - kEpsilon && tmin < tzmax + kEpsilon) normal = glm::vec3(0, 0, -1) * (2 * sign[2] - 1);
-
-	if (tmin > tmax || tmin < -kEpsilon) return new Intersection();
 
 	glm::vec3 point = eye + tmin * ray;
 
@@ -152,78 +156,177 @@ Cylinder::~Cylinder()
 {
 }
 
+double planeIntersect(glm::vec3 point, glm::vec3 normal, glm::vec3 eye, glm::vec3 ray) {
+	double num = glm::dot(point - eye, normal);
+	double den = glm::dot(ray, normal);
+
+	if (num == 0 && den == 0) {
+		return std::numeric_limits<double>::max();
+	} else if (den == 0) {
+		return std::numeric_limits<double>::max();
+	} else {
+		return num / den;
+	}
+}
+
+// Intersection* Cylinder::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
+// 	double roots[2];
+// 	double A = ray.x * ray.x + ray.z * ray.z;
+// 	double B = 2 * eye.x * ray.x + 2 * eye.z * ray.z;
+// 	double C = eye.x * eye.x + eye.z * eye.z - 1;
+// 	size_t num = quadraticRoots(A, B, C, roots);
+
+// 	if (num == 0) {
+// 		return new Intersection();
+// 	} else if (num == 1) {
+// 		double t = roots[0];
+// 		double y = eye.y + t * ray.y;
+// 		if (y >= -1 && y <= 1) {
+// 			glm::vec3 point = eye + t * ray;
+// 			glm::vec3 normal = glm::normalize(glm::vec3(point.x, 0, point.z));
+// 			return new Intersection(true, t, point, normal);
+// 		} else {
+// 			return new Intersection();
+// 		}
+// 	} else if (num == 2) {
+// 		double t0 = std::min(roots[0], roots[1]);
+// 		double t1 = std::max(roots[0], roots[1]);
+
+
+// 		double y0 = eye.y + t0 * ray.y;
+// 		double y1 = eye.y + t1 * ray.y;
+// 		// std::cout << "t0 " << t0 << " t1 " << t1 << std::endl;
+// 		// std::cout << "y0 " << y0 << " y1 " << y1 << std::endl;
+
+// 		if (y0 < -1) {
+// 			if (y1 < -1) { // Miss
+// 				return new Intersection();
+// 			} else { // Hits the cap at -1
+// 				float th = t0 + (t1 - t0) * (y0 + 1) / (y0 - y1);
+// 				if (th <= 0) {
+// 					return new Intersection();
+// 				} else {
+// 					glm::vec3 point = eye + th * ray;
+// 					glm::vec3 normal = glm::vec3(0, -1, 0);
+// 					// std::cout << "eye " << to_string(eye) << " ray " << to_string(ray) << std::endl;
+// 					// std::cout << "point " << to_string(point) << " normal " << to_string(normal) << std::endl;
+// 					return new Intersection(true, th, point, normal);
+// 				}
+// 			}
+// 		} else if (y0 >= -1 && y0 <= 1) {
+// 			// Hit the cylinder bit
+// 			if (t0 <= 0) {
+// 				return new Intersection();
+// 			} else {
+// 				glm::vec3 point = eye + t0 * ray;
+// 				glm::vec3 normal = glm::normalize(glm::vec3(point.x, 0, point.z));
+// 				// std::cout << "eye " << to_string(eye) << " ray " << to_string(ray) << std::endl;
+// 				// std::cout << "point " << to_string(point) << " normal " << to_string(normal) << std::endl;
+// 				return new Intersection(true, t0, point, normal);
+// 			}
+// 		} else if (y0 > 1) {
+// 			if (y1 > 1) {
+// 				return new Intersection();
+// 			} else {
+// 				// Hit the cap
+// 				float th = t0 + (t1 - t0) * (y0 - 1) / (y0 - y1);
+// 				if (th <= 0) {
+// 					return new Intersection();
+// 				} else {
+// 					glm::vec3 point = eye + th * ray;
+// 					glm::vec3 normal = glm::vec3(0, 1, 0);
+// 					return new Intersection(true, th, point, normal);
+// 				}
+// 			}
+// 		}
+// 	}
+
+// 	return new Intersection();
+// }
+
 Intersection* Cylinder::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
 	double roots[2];
-	double A = ray.x * ray.x + ray.z * ray.z;
-	double B = 2 * eye.x * ray.x + 2 * eye.z + ray.z;
-	double C = eye.x * eye.x + eye.z * eye.z - 1;
+	double A = ray.x * ray.x + ray.y * ray.y;
+	double B = 2 * eye.x * ray.x + 2 * eye.y * ray.y;
+	double C = eye.x * eye.x + eye.y * eye.y - 1;
 	size_t num = quadraticRoots(A, B, C, roots);
 
-	if (num == 0) {
-		return new Intersection();
-	} else if (num == 1) {
-		double t = roots[0];
-		double y = eye.y + t * ray.y;
-		if (y >= -1 && y <= 1) {
-			glm::vec3 point = eye + t * ray;
-			glm::vec3 normal = glm::normalize(glm::vec3(point.x, 0, point.z));
-			return new Intersection(true, t, point, normal);
-		} else {
-			return new Intersection();
-		}
-	} else if (num == 2) {
-		double t0 = std::min(roots[0], roots[1]);
-		double t1 = std::max(roots[0], roots[1]);
+	double zmax = 1, zmin = -1;
+	double t = std::numeric_limits<double>::infinity();
+	glm::vec3 normal;
+	bool intersect = false;
 
-		double y0 = eye.y + t0 * ray.y;
-		double y1 = eye.y + t1 * ray.y;
-		std::cout << "y0 " << y0 << " y1 " << y1 << std::endl;
+	if (num > 0) {
+		double t1 = roots[0];
+		double t2 = (num == 1) ? std::numeric_limits<double>::infinity() : roots[1];
 
-		if (y0 < -1) {
-			if (y1 < -1) { // Miss
-				return new Intersection();
-			} else { // Hits the cap at -1
-				float th = t0 + (t1 - t0) * (y0 + 1) / (y0 - y1);
-				if (th <= 0) {
-					return new Intersection();
-				} else {
-					glm::vec3 point = eye + th * ray;
-					glm::vec3 normal = glm::vec3(0, -1, 0);
-					std::cout << "eye " << to_string(eye) << " ray " << to_string(ray) << std::endl;
-					std::cout << "point " << to_string(point) << " normal " << to_string(normal) << std::endl;
-					return new Intersection(true, th, point, normal);
-				}
+		if (t1 > kEpsilon || t2 > kEpsilon) {
+			double z1 = eye.z + t1 * ray.z;
+			double z2 = eye.z + t2 * ray.z;
+
+			t = (z1 < zmax && z1 > zmin && t1 > 0) ? t1 : t;
+			t = (z2 < zmax && z2 > zmin && t2 > 0) ? (t2 < t ? t2 : t) : t;
+
+			if (!std::isinf<double>(t)) {
+				normal = eye + t * ray;
+				normal.z = 0.0;
+				intersect = true;
 			}
-		} else if (y0 >= -1 && y0 <= 1) {
-			// Hit the cylinder bit
-			if (t0 <= 0) {
-				return new Intersection();
-			} else {
-				glm::vec3 point = eye + t0 * ray;
-				glm::vec3 normal = glm::normalize(glm::vec3(point.x, 0, point.z));
-				std::cout << "eye " << to_string(eye) << " ray " << to_string(ray) << std::endl;
-				std::cout << "point " << to_string(point) << " normal " << to_string(normal) << std::endl;
-				return new Intersection(true, t0, point, normal);
-			}
-		} else if (y0 > 1) {
-			if (y1 > 1) {
-				return new Intersection();
-			} else {
-				// Hit the cap
-				float th = t0 + (t1 - t0) * (y0 - 1) / (y0 - y1);
-				if (th <= 0) {
-					return new Intersection();
-				} else {
-					glm::vec3 point = eye + th * ray;
-					glm::vec3 normal = glm::vec3(0, 1, 0);
-					std::cout << "eye " << to_string(eye) << " ray " << to_string(ray) << std::endl;
-					std::cout << "point " << to_string(point) << " normal " << to_string(normal) << std::endl;
-					return new Intersection(true, th, point, normal);
-				}
-			}
-		}
+		} 
 	}
 
-	return new Intersection();
+	Disc dmin(glm::vec3(0, 0, zmin), 1);
+	Intersection *iend = dmin.intersect(eye, ray);
+	if (iend->hit) {
+		double tzmin = iend->t;
+		if (tzmin < t) {
+			t = tzmin;
+			normal = glm::vec3(0, 0, -1);
+			intersect = true;
+		}
+	}
+	delete iend;
+
+	Disc dmax(glm::vec3(0, 0, zmax), 1);
+	iend = dmax.intersect(eye, ray);
+	if (iend->hit) {
+		double tzmax = iend->t;
+		if (tzmax < t) {
+			t = tzmax;
+			normal = glm::vec3(0, 0, 1);
+			intersect = true;
+		}
+	}
+	delete iend;
+
+	glm::vec3 point = eye + t * ray;
+	if (intersect) return new Intersection(true, t, point, normal);
+	else return new Intersection();
+}
+
+Disc::~Disc()
+{
+}
+
+Intersection *Disc::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
+	glm::vec3 normal = glm::vec3(0, 0, 1);
+
+	// interscet with xy plane that containing the disk
+	double den = glm::dot(normal, ray);
+	if (fabs(den) < std::numeric_limits<double>::epsilon()) return new Intersection();
+
+	// point cannot behind the ray
+	double t = glm::dot(normal, m_pos - eye) * 1 / den;
+	if (t < kEpsilon) return new Intersection();
+
+	glm::vec3 point = eye + t * ray;
+
+	// point need to be inside the disk
+	if (glm::length(point - m_pos) > m_radius) return new Intersection();
+
+	// flip normal if backface is facing the ray
+	normal = glm::dot(eye - m_pos, normal) < 0 ? -normal : normal;
+
+	return new Intersection(true, t, point, normal);
 }
 
