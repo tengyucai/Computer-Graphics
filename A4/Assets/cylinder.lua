@@ -1,9 +1,9 @@
 -- test for hierarchical ray-tracers.
 -- Thomas Pflaum 1996
 
-gold = gr.material({0.9, 0.8, 0.4}, {0.8, 0.8, 0.4}, 25)
-grass = gr.material({0.1, 0.7, 0.1}, {0.0, 0.0, 0.0}, 0)
-blue = gr.material({0.7, 0.6, 1}, {0.5, 0.4, 0.8}, 25)
+gold = gr.material({0.9, 0.8, 0.4}, {0.8, 0.8, 0.4}, 25, 0, 0)
+grass = gr.material({0.1, 0.7, 0.1}, {0.0, 0.0, 0.0}, 0, 0, 0)
+blue = gr.material({0.7, 0.6, 1}, {0.5, 0.4, 0.8}, 25, 0, 0)
 
 scene = gr.node('scene')
 scene:rotate('X', 23)
@@ -44,11 +44,16 @@ scene:add_child(poly)
 poly:translate(-2, 1.618034, 0)
 poly:set_material(blue)
 
+cylinder = gr.cylinder('cylinder')
+scene:add_child(cylinder)
+cylinder:set_material(gold)
+cylinder:translate(-7, 1, 4)
+
 -- The lights
 l1 = gr.light({200,200,400}, {0.8, 0.8, 0.8}, {1, 0, 0})
 l2 = gr.light({0, 5, -20}, {0.4, 0.4, 0.8}, {1, 0, 0})
 
-gr.render(scene, 'hier.png', 256, 256, 
+gr.render(scene, 'cylinder.png', 256, 256, 
 	  {0, 0, 0,}, {0, 0, -1}, {0, 1, 0}, 50,
 	  -- {0, 0, 30}, {0, 0, -1}, {0, 1, 0}, 50,
 	  {0.4, 0.4, 0.4}, {l1, l2})
