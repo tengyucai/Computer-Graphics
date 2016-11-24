@@ -102,3 +102,17 @@ public:
 public:
   Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };
+
+class Disc : public Primitive {
+public:
+  Disc(const glm::vec3& pos, double radius)
+    : m_pos(pos)
+    , m_radius(radius) {}
+  virtual ~Disc();
+  Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
+
+private:
+  glm::vec3 m_pos;
+  double m_radius;
+};
+
