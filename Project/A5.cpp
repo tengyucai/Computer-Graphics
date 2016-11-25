@@ -145,8 +145,15 @@ void A5_Render(
 	// }
 
 	// Photon mapping
-	Photon_map *m_photon_map = new Photon_map(100000000);
+	Photon_map *m_photon_map = new Photon_map(200000000);
 	photonMapping(root, image, eye, view, up, fovy, ambient, lights, m_photon_map);
+	// vec3 normal = vec3(0, 1, 0);
+	// vec3 dir = vec3(2, -1, 0);
+	// for (int i = 0; i < 1000; ++i) {
+	// 	vec3 refraction = getRandomDiffuseReflectionRay(normal);
+	// 	cout << to_string(refraction) << endl;
+	// 	image((refraction.x + 1)*128, (refraction.z+1)*128, 0) = 1;
+	// }
 }
 
 void photonMapping(
@@ -173,13 +180,13 @@ void photonTracing(SceneNode *root, Photon_map *photon_map, const list<Light *> 
 	int num_photons_per_light = 100000000;
 	int emited_photons = 0;
 	int num_photons;
-	int progress = 0;
+	double progress = 0;
 
 	cout << "Building photon map" << endl;
 	for (Light *light : lights) {
 		double x, y, z;
 		num_photons = 0;
-		while (num_photons < num_photons_per_light) {
+		while (emited_photons < num_photons_per_light) {
 			do {
 				x = ((double) rand() / (RAND_MAX)) * 2 - 1;
 				y = ((double) rand() / (RAND_MAX)) * 2 - 1;
@@ -187,12 +194,13 @@ void photonTracing(SceneNode *root, Photon_map *photon_map, const list<Light *> 
 			} while (x*x + y*y + z*z > 1.0);
 			orig = light->position;
 			dir = normalize(vec3(x, y, z));
-			vec3 power = glm::vec3(1000000, 1000000, 1000000);// light->power * light->colour;
+			// cout << to_string(dir) << endl;
+			vec3 power = glm::vec3(5, 5, 5);//glm::vec3(1000000, 1000000, 1000000);// light->power * light->colour;
 			int photons = tracePhoton(root, orig, dir, photon_map, power, 0);
 			num_photons += photons;
 			++emited_photons;
-			if (double(num_photons) / num_photons_per_light * 100 >= (progress + 1)) {
-				progress += 1;
+			if (double(emited_photons) / num_photons_per_light * 100 >= (progress + 0.1)) {
+				progress += 0.1;
 				cout << "Progress : " << progress << " %" << endl;
 			}
 		}
@@ -203,7 +211,7 @@ void photonTracing(SceneNode *root, Photon_map *photon_map, const list<Light *> 
 }
 
 int tracePhoton(SceneNode *root, vec3 orig, vec3 dir, Photon_map *photon_map, vec3 power, int depth) {
-	if (++depth >= 10) return 0;
+	if (++depth > 10) return 0;
 
 	Intersection *intersection = root->intersect(glm::vec4(orig, 1), glm::vec4(dir, 0));
 	if (!intersection->hit) {
@@ -231,6 +239,7 @@ int tracePhoton(SceneNode *root, vec3 orig, vec3 dir, Photon_map *photon_map, ve
 		float pos[3] = { intersection->point.x, intersection->point.y, intersection->point.z};
 		float d[3] = {dir.x, dir.y, dir.z};
 		photon_map->store(pow, pos, d);
+		// cout << to_string(intersection->point) << " " << to_string(intersection->normal) << endl;
 		++photon_added;
 		vec3 new_dir = getRandomDiffuseReflectionRay(intersection->normal);
 		vec3 point = intersection->point;
@@ -242,23 +251,23 @@ int tracePhoton(SceneNode *root, vec3 orig, vec3 dir, Photon_map *photon_map, ve
 		// cout << "specular" << endl;
 		// need to scale the power of the reflected photon
 		vec3 new_power = vec3(power.x*ks.x/avg_ks, power.y*ks.y/avg_ks, power.z*ks.z/avg_ks);
-		vec3 new_dir = getPerfectReflectionRay(-1.0*dir, intersection->normal);
+		vec3 new_dir = getPerfectReflectionRay(dir, intersection->normal);
 		vec3 point = intersection->point;
 		delete intersection;
-		return tracePhoton(root, point, new_dir, photon_map, power, depth);
+		return tracePhoton(root, point, new_dir, photon_map, new_power, depth);
 	}
 	// 3. refraction
-	// else if ((avg_kd + avg_ks) < ksi && ksi <= (avg_kd + avg_ks + transparency)) {
-	// 	tuple<bool, double, vec3> result = getRefractionRay(dir, intersection->normal, material->getRefractionIndex());
-	// 	bool total_internal_reflection = get<0>(result);
-	// 	if (!total_internal_reflection) {
-	// 		vec3 new_dir = get<2>(result);
-	// 		vec3 point = intersection->point;
-	// 		delete intersection;
-	// 		cout << "refraction" << endl;
-	// 		return tracePhoton(root, point, new_dir, photon_map, power, depth);
-	// 	}
-	// }
+	else if ((avg_kd + avg_ks) < ksi && ksi <= (avg_kd + avg_ks + transparency)) {
+		tuple<bool, double, vec3> result = getRefractionRay(dir, intersection->normal, material->getRefractionIndex());
+		bool total_internal_reflection = get<0>(result);
+		if (!total_internal_reflection) {
+			vec3 new_dir = get<2>(result);
+			vec3 point = intersection->point;
+			delete intersection;
+			cout << "refraction" << endl;
+			return tracePhoton(root, point, new_dir, photon_map, power, depth);
+		}
+	}
 	// 4. absorption
 	else if ((avg_kd + avg_ks) < ksi && ksi <= 1) {
 		// cout << "absorption" << endl;
@@ -298,12 +307,22 @@ void renderUsingPhotonMap(
 
 			// Intersection *intersection = root->intersect(glm::vec4(eye, 1), glm::vec4(ray, 0));
 			// if (intersection != NULL && intersection->hit) {
-			// 	colour = getLights(root, lights, ambient, eye, -1.0*ray, intersection, 3);
+			// 	// colour = getLights(root, lights, ambient, eye, -1.0*ray, intersection, 3);
+			// 	float irrad[3] = { 0, 0, 0 };
+			// 	float pos[3] = { intersection->point.x, intersection->point.y, intersection->point.z };
+			// 	float normal[3] = { intersection->normal.x, intersection->normal.y, intersection->normal.z };
+			// 	photon_map->irradiance_estimate(irrad, pos, normal, 0.008f, 10);
+			// 	cout << irrad[0] << " " << irrad[1] << " " << irrad[2] << endl;
+			// 	colour += vec3(irrad[0], irrad[1], irrad[2]);
+			// 	image(x, y, 0) = colour.x;
+			// 	image(x, y, 1) = colour.y;
+			// 	image(x, y, 2) = colour.z;
 			// }
 			// delete intersection;
 
 			if (traceScene(root, eye, ray, photon_map, colour, 0)) {
 				// cout << to_string(colour) << endl;
+				// cout << colour.x << " " << colour.y << " " << colour.z << endl;
 				image(x, y, 0) = colour.x;
 				image(x, y, 1) = colour.y;
 				image(x, y, 2) = colour.z;
@@ -321,10 +340,12 @@ void renderUsingPhotonMap(
 	}
 }
 
-bool traceScene(SceneNode *root, vec3 orig, vec3 ray, Photon_map *photon_map, vec3 &colour, int depth) {
-	if (++depth >= 10) return false;
+bool traceScene(SceneNode *root, vec3 orig, vec3 dir, Photon_map *photon_map, vec3 &colour, int depth) {
+	if (++depth > 10) return false;
 
-	Intersection *intersection = root->intersect(glm::vec4(orig, 1), glm::vec4(ray, 0));
+	orig = orig + kEpsilon * dir;
+	Intersection *intersection = root->intersect(glm::vec4(orig, 1), glm::vec4(dir, 0));
+
 	if (intersection->hit) {
 		PhongMaterial *material = (PhongMaterial *)intersection->material;
 		
@@ -333,16 +354,18 @@ bool traceScene(SceneNode *root, vec3 orig, vec3 ray, Photon_map *photon_map, ve
 			float irrad[3] = { 0, 0, 0 };
 			float pos[3] = { intersection->point.x, intersection->point.y, intersection->point.z };
 			float normal[3] = { intersection->normal.x, intersection->normal.y, intersection->normal.z };
-			photon_map->irradiance_estimate(irrad, pos, normal, 10.0f, 5000);
-			cout << irrad[0] << " " << irrad[1] << " " << irrad[2] << endl;
+			photon_map->irradiance_estimate(irrad, pos, normal, 0.05f, 500);
+			// cout << irrad[0] << " " << irrad[1] << " " << irrad[2] << endl;
 			colour += vec3(irrad[0], irrad[1], irrad[2]);
 		}
 
 		if (material->isSpecular()) {
-			// cout << "Specular" << endl;
+			cout << "Specular" << endl;
 			vec3 reflect_colour;
-			vec3 reflect_ray = getPerfectReflectionRay(-1.0*ray, intersection->normal);
-			vec3 point = intersection->point + 0.0001 * intersection->normal;
+			vec3 reflect_ray = getPerfectReflectionRay(dir, intersection->normal);
+			cout << to_string(intersection->normal) << endl;
+			cout << to_string(dir) << " " << to_string(reflect_ray) << endl;
+			vec3 point = intersection->point;// + kEpsilon * intersection->normal;
 			if (traceScene(root, point, reflect_ray, photon_map, reflect_colour, depth)) {
 				colour += reflect_colour;
 			} 
@@ -361,14 +384,17 @@ bool traceScene(SceneNode *root, vec3 orig, vec3 ray, Photon_map *photon_map, ve
 		// 		} 
 		// 	}
 		// }
+
+		return true;
 	}
 	delete intersection;
 
-	return true;
+	return false;
 }
 
 vec3 getPerfectReflectionRay(vec3 dir, vec3 normal) {
-	vec3 refl = 2.0f * glm::dot(dir, normal) * normal - dir;
+	normal = normalize(normal);
+	vec3 refl = 2.0f * glm::dot(-dir, normal) * normal - -dir;
 	return normalize(refl);
 }
 
@@ -379,7 +405,7 @@ vec3 getRandomDiffuseReflectionRay(vec3 normal) {
 	double cos_theta = sqrt(rand1);
 	double phi = 2 * M_PI * rand2;
 	vec3 w = normal;
-	vec3 u = fabs(w.x) > 0.1 ? vec3(0, 1, 0) : cross(vec3(1, 0, 0), w);
+	vec3 u = fabs(w.x) > 0.1 ? cross(vec3(0, 1, 0), w) : cross(vec3(1, 0, 0), w);
 	u = normalize(u);
 	vec3 v = cross(w, u);
 	dir = cos(phi) * cos_theta * u + sin(phi) * cos_theta * v + sqrt(1-rand1) * w;

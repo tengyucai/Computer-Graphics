@@ -158,7 +158,9 @@ glm::vec3 getLights(
 				vec3 p = intersection->point + kEpsilon * l;
 				Intersection *s_intersection = root->intersect(glm::vec4(p, 1), glm::vec4(l, 0));
 
-				if (s_intersection == NULL || !s_intersection->hit ||
+				if (s_intersection == NULL ||
+					!s_intersection->hit ||
+					glm::distance(intersection->point, s_intersection->point) > glm::distance(intersection->point, light->position) ||
 					glm::dot(intersection->point - s_intersection->point, s_intersection->normal) < 0) {
 					glm::vec3 diffusion = intensity * material->getkd() * glm::dot(normal, l);
 

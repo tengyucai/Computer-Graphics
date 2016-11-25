@@ -26,11 +26,11 @@ double PhongMaterial::getShininess() {
 }
 
 bool PhongMaterial::isDiffuse() {
-	return m_kd.x > 0.0f || m_kd.y > 0.0f || m_kd.z > 0.0f;
+	return m_kd.x > 0.01f || m_kd.y > 0.01f || m_kd.z > 0.01f;
 }
 
 bool PhongMaterial::isSpecular() {
-	return m_ks.x > 0.0f || m_ks.y > 0.0f || m_ks.z > 0.0f;
+	return m_ks.x > 0.01f || m_ks.y > 0.01f || m_ks.z > 0.01f;
 }
 
 bool PhongMaterial::isTransparent() {

@@ -2,7 +2,7 @@ grass = gr.material({0.1, 0.7, 0.1}, {0.0, 0.0, 0.0}, 0, 0)
 stone = gr.material({0.9, 0.9, 0.9}, {0.0, 0.0, 0.0}, 0, 0)
 red = gr.material({0.9, 0.1, 0.1}, {0.0, 0.0, 0.0}, 0, 0)
 blue = gr.material({0.2, 0.2, 0.9}, {0.0, 0.0, 0.0}, 0, 0)
-mat3 = gr.material({1.0, 0.6, 0.1}, {0.5, 0.7, 0.5}, 0, 0.4)
+mat3 = gr.material({1.0, 0.6, 0.1}, {0.0, 0.0, 0.0}, 0, 0.4)
 
 scene = gr.node('root')
 
@@ -44,7 +44,8 @@ left:translate(-260, 0, 0)
 -- scene:add_child(s1)
 -- s1:set_material(mat3)
 
-white_light = gr.light({0, 100, 400}, {0.6, 0.6, 0.6}, {1, 0, 0}, 10000)
+-- white_light = gr.light({0, 100, 400}, {0.6, 0.6, 0.6}, {1, 0, 0}, 10000)
+white_light = gr.light({0, 0, 0}, {0.6, 0.6, 0.6}, {1, 0, 0}, 10000)
 white_light2 = gr.light({100.0, -100.0, 150.0}, {0.9, 0.9, 0.9}, {1, 0, 0}, 10000)
 
 gr.render(scene, 'test.png', 256, 256,
