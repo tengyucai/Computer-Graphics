@@ -267,7 +267,8 @@ Intersection* Cylinder::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
 			t = (z1 < zmax && z1 > zmin && t1 > 0) ? t1 : t;
 			t = (z2 < zmax && z2 > zmin && t2 > 0) ? (t2 < t ? t2 : t) : t;
 
-			if (!std::isinf<double>(t)) {
+			// if (!std::isinf<double>(t)) {
+			if (t < std::numeric_limits<double>::max()) {
 				normal = eye + t * ray;
 				normal.z = 0.0;
 				intersect = true;
