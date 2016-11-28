@@ -7,14 +7,15 @@
 class Intersection {
 public:
   bool hit;
+  bool inside;
   glm::vec3 point;
   glm::vec3 normal;
   Material *material;
   float t;
   Intersection()
-    : hit(false), point(glm::vec3()), normal(glm::vec3()), material(NULL), t(0) {}
+    : hit(false), inside(false), point(glm::vec3()), normal(glm::vec3()), material(NULL), t(0) {}
   Intersection(bool hit, float t, glm::vec3 point, glm::vec3 normal)
-    : hit(hit), t(t), point(point), normal(normal), material(NULL) {}
+    : hit(hit), t(t), inside(false), point(point), normal(normal), material(NULL) {}
 };
 
 class Primitive {
@@ -93,3 +94,26 @@ private:
 public:
   Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
 };
+
+class Cylinder : public Primitive {
+public:
+  Cylinder() {};
+  virtual ~Cylinder();
+
+public:
+  Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
+};
+
+class Disc : public Primitive {
+public:
+  Disc(const glm::vec3& pos, double radius)
+    : m_pos(pos)
+    , m_radius(radius) {}
+  virtual ~Disc();
+  Intersection virtual *intersect(const glm::vec3 &eye, const glm::vec3 &ray);
+
+private:
+  glm::vec3 m_pos;
+  double m_radius;
+};
+

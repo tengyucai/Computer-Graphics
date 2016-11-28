@@ -7,7 +7,7 @@
 // #include "cs488-framework/ObjFileDecoder.hpp"
 #include "Mesh.hpp"
 
-#define kEpsilon 0.001
+#define kEpsilon 0.000001
 
 Mesh::Mesh( const std::string& fname )
 	: m_vertices()
@@ -41,6 +41,8 @@ Mesh::Mesh( const std::string& fname )
 			m_faces.push_back( Triangle( s1 - 1, s2 - 1, s3 - 1 ) );
 		}
 	}
+
+  std::cout << m_faces.size() << std::endl;
 
   is_plane = (fabs(xmax - xmin) < kEpsilon) || (fabs(ymax - ymin) < kEpsilon) || (fabs(zmax - zmin) < kEpsilon);
   double size = fmax(xmax - xmin, fmax(ymax - ymin, zmax - zmin));
@@ -87,6 +89,7 @@ Intersection* Mesh::rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &
   u = f * glm::dot(s, h);
 
   if (u < 0.0 || u > 1.0) return new Intersection();
+  // std::cout << "2" << std::endl;
 
   q = glm::cross(s, e1);
   v = f * glm::dot(ray, q);
@@ -96,6 +99,7 @@ Intersection* Mesh::rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &
   t = f * glm::dot(e2, q);
 
   if (t < kEpsilon) return new Intersection();
+  // std::cout << "4" << std::endl;
   else {
     glm::vec3 point = eye + t * ray;
     glm::vec3 normal = glm::cross(e1, e2);
@@ -110,17 +114,19 @@ Intersection* Mesh::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {
     if (!bbox_intersection->hit) return intersection;
     // else return intersection;
   }
-    
+
   Intersection *tmp;
   float min_t = std::numeric_limits<float>::infinity();;
 
   for (Triangle face : m_faces) {
     tmp = rayTriangleIntersect(eye, ray, m_vertices[face.v1], m_vertices[face.v2], m_vertices[face.v3]);
     if (tmp->hit && tmp->t < min_t) {
+      // std::cout << "hit" << std::endl;
       delete intersection;
       intersection = tmp;
       min_t = tmp->t;
     } else {
+      // std::cout << "not hit" << std::endl;
       delete tmp;
     }
 	}

@@ -50,6 +50,7 @@
 #include "Mesh.hpp"
 #include "GeometryNode.hpp"
 #include "JointNode.hpp"
+#include "CSGNode.hpp"
 #include "Primitive.hpp"
 #include "Material.hpp"
 #include "PhongMaterial.hpp"
@@ -194,6 +195,24 @@ int gr_cube_cmd(lua_State* L)
   return 1;
 }
 
+// Create a cylinder node
+extern "C"
+int gr_cylinder_cmd(lua_State *L)
+{
+  GRLUA_DEBUG_CALL;
+
+  gr_node_ud* data = (gr_node_ud*)lua_newuserdata(L, sizeof(gr_node_ud));
+  data->node = 0;
+
+  const char* name = luaL_checkstring(L, 1);
+  data->node = new GeometryNode(name, new Cylinder());
+
+  luaL_getmetatable(L, "gr.node");
+  lua_setmetatable(L, -2);
+
+  return 1;
+}
+
 // Create a non-hierarchical sphere node
 extern "C"
 int gr_nh_sphere_cmd(lua_State* L)
@@ -246,33 +265,123 @@ int gr_nh_box_cmd(lua_State* L)
 extern "C"
 int gr_mesh_cmd(lua_State* L)
 {
-	GRLUA_DEBUG_CALL;
+  GRLUA_DEBUG_CALL;
 
-	gr_node_ud* data = (gr_node_ud*)lua_newuserdata(L, sizeof(gr_node_ud));
-	data->node = 0;
+  gr_node_ud* data = (gr_node_ud*)lua_newuserdata(L, sizeof(gr_node_ud));
+  data->node = 0;
 
-	const char* name = luaL_checkstring(L, 1);
-	const char* obj_fname = luaL_checkstring(L, 2);
+  const char* name = luaL_checkstring(L, 1);
+  const char* obj_fname = luaL_checkstring(L, 2);
 
-	std::string sfname( obj_fname );
+  std::string sfname( obj_fname );
 
-	// Use a dictionary structure to make sure every mesh is loaded
-	// at most once.
-	auto i = mesh_map.find( sfname );
-	Mesh *mesh = nullptr;
+  // Use a dictionary structure to make sure every mesh is loaded
+  // at most once.
+  auto i = mesh_map.find( sfname );
+  Mesh *mesh = nullptr;
 
-	if( i == mesh_map.end() ) {
-		mesh = new Mesh( obj_fname );
-	} else {
-		mesh = i->second;
-	}
+  if( i == mesh_map.end() ) {
+    mesh = new Mesh( obj_fname );
+  } else {
+    mesh = i->second;
+  }
 
-	data->node = new GeometryNode( name, mesh );
+  data->node = new GeometryNode( name, mesh );
 
-	luaL_getmetatable(L, "gr.node");
-	lua_setmetatable(L, -2);
+  luaL_getmetatable(L, "gr.node");
+  lua_setmetatable(L, -2);
 
-	return 1;
+  return 1;
+}
+
+// Create a CSG union node
+extern "C"
+int gr_csg_union_node(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+
+  gr_node_ud* data = (gr_node_ud*)lua_newuserdata(L, sizeof(gr_node_ud));
+  data->node = 0;
+
+  const char* name = luaL_checkstring(L, 1);
+
+  gr_node_ud* nodedata_a = (gr_node_ud*)luaL_checkudata(L, 2, "gr.node");
+  luaL_argcheck(L, nodedata_a != 0, 2, "Node expected");
+  GeometryNode *node_a = (GeometryNode *)nodedata_a->node;
+  luaL_argcheck(L, node_a, 2, "Geometry node expected");
+
+  gr_node_ud* nodedata_b = (gr_node_ud*)luaL_checkudata(L, 3, "gr.node");
+  luaL_argcheck(L, nodedata_b != 0, 3, "Node expected");
+  GeometryNode *node_b = (GeometryNode *)nodedata_b->node;
+  luaL_argcheck(L, node_b, 3, "Geometry node expected");
+
+  UnionNode* node = new UnionNode(name, node_a, node_b);
+  data->node = node;
+
+  luaL_getmetatable(L, "gr.node");
+  lua_setmetatable(L, -2);
+
+  return 1;
+}
+
+// Create a CSG intersection node
+extern "C"
+int gr_csg_intersection_node(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+
+  gr_node_ud* data = (gr_node_ud*)lua_newuserdata(L, sizeof(gr_node_ud));
+  data->node = 0;
+
+  const char* name = luaL_checkstring(L, 1);
+
+  gr_node_ud* nodedata_a = (gr_node_ud*)luaL_checkudata(L, 2, "gr.node");
+  luaL_argcheck(L, nodedata_a != 0, 2, "Node expected");
+  GeometryNode *node_a = (GeometryNode *)nodedata_a->node;
+  luaL_argcheck(L, node_a, 2, "Geometry node expected");
+
+  gr_node_ud* nodedata_b = (gr_node_ud*)luaL_checkudata(L, 3, "gr.node");
+  luaL_argcheck(L, nodedata_b != 0, 3, "Node expected");
+  GeometryNode *node_b = (GeometryNode *)nodedata_b->node;
+  luaL_argcheck(L, node_b, 3, "Geometry node expected");
+
+  IntersectionNode* node = new IntersectionNode(name, node_a, node_b);
+  data->node = node;
+
+  luaL_getmetatable(L, "gr.node");
+  lua_setmetatable(L, -2);
+
+  return 1;
+}
+
+// Create a CSG difference node
+extern "C"
+int gr_csg_difference_node(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+
+  gr_node_ud* data = (gr_node_ud*)lua_newuserdata(L, sizeof(gr_node_ud));
+  data->node = 0;
+
+  const char* name = luaL_checkstring(L, 1);
+
+  gr_node_ud* nodedata_a = (gr_node_ud*)luaL_checkudata(L, 2, "gr.node");
+  luaL_argcheck(L, nodedata_a != 0, 2, "Node expected");
+  GeometryNode *node_a = (GeometryNode *)nodedata_a->node;
+  luaL_argcheck(L, node_a, 2, "Geometry node expected");
+
+  gr_node_ud* nodedata_b = (gr_node_ud*)luaL_checkudata(L, 3, "gr.node");
+  luaL_argcheck(L, nodedata_b != 0, 3, "Node expected");
+  GeometryNode *node_b = (GeometryNode *)nodedata_b->node;
+  luaL_argcheck(L, node_b, 3, "Geometry node expected");
+
+  DifferenceNode* node = new DifferenceNode(name, node_a, node_b);
+  data->node = node;
+
+  luaL_getmetatable(L, "gr.node");
+  lua_setmetatable(L, -2);
+
+  return 1;
 }
 
 // Make a point light
@@ -291,11 +400,9 @@ int gr_light_cmd(lua_State* L)
   get_tuple(L, 1, &l.position[0], 3);
   get_tuple(L, 2, col, 3);
   get_tuple(L, 3, l.falloff, 3);
-  double power = luaL_checknumber(L, 4);
 
   l.colour = glm::vec3(col[0], col[1], col[2]);
-  l.power = power;
-
+  
   data->light = new Light(l);
 
   luaL_newmetatable(L, "gr.light");
@@ -345,11 +452,11 @@ int gr_render_cmd(lua_State* L)
     lua_pop(L, 1);
   }
 
-	Image im( width, height);
-	A5_Render(root->node, im, eye, view, up, fov, ambient, lights);
+  Image im( width, height);
+  A5_Render(root->node, im, eye, view, up, fov, ambient, lights);
     im.savePng( filename );
 
-	return 0;
+  return 0;
 }
 
 // Create a material
@@ -367,12 +474,13 @@ int gr_material_cmd(lua_State* L)
 
   double shininess = luaL_checknumber(L, 3);
   double transparency = luaL_checknumber(L, 4);
-
+  double refraction_index = luaL_checknumber(L, 5);
+  
   data->material = new PhongMaterial(glm::vec3(kd[0], kd[1], kd[2]),
                                      glm::vec3(ks[0], ks[1], ks[2]),
                                      shininess,
                                      transparency,
-                                     1.0);
+                                     refraction_index);
 
   luaL_newmetatable(L, "gr.material");
   lua_setmetatable(L, -2);
@@ -525,9 +633,13 @@ static const luaL_Reg grlib_functions[] = {
   {"material", gr_material_cmd},
   // New for assignment 4
   {"cube", gr_cube_cmd},
+  {"cylinder", gr_cylinder_cmd},
   {"nh_sphere", gr_nh_sphere_cmd},
   {"nh_box", gr_nh_box_cmd},
   {"mesh", gr_mesh_cmd},
+  {"union", gr_csg_union_node},
+  {"intersection", gr_csg_intersection_node},
+  {"difference", gr_csg_difference_node},
   {"light", gr_light_cmd},
   {"render", gr_render_cmd},
   {0, 0}
