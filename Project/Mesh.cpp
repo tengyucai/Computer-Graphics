@@ -82,7 +82,7 @@ Intersection* Mesh::rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &
   h = glm::cross(ray, e2);
   a = glm::dot(e1, h);
 
-  if (a > -kEpsilon && a < kEpsilon) return new Intersection();
+  if (fabs(a) < kEpsilon) return new Intersection();
 
   f = 1 / a;
   s = eye - v0;
@@ -105,6 +105,60 @@ Intersection* Mesh::rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &
     glm::vec3 normal = glm::cross(e1, e2);
     return new Intersection(true, t, point, normal);
   }
+}
+
+Intersection* Mesh::rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &ray, 
+    const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2) {
+  glm::vec3 e1, e2, h, s, q, normal;
+  float a, f, u, v, t;
+
+  // computer plane's normal
+  glm::vec3 v0v1 = v1 - v0;
+  glm::vec3 v0v2 = v2 - v0;
+  // no need t0 normalize
+  glm::vec3 N = glm::cross(v0v1, v0v2);
+  float denom = glm::dot(N, N);
+
+  // Step 1: finding P
+
+  // check if ray and plane are parallel
+  float NdotRayDir = glm::dot(N, ray);
+  if (fabs(NdotRayDir) < kEpsilon) // almost 0
+    return new Intersection();  // they are parallel so not intersect
+
+  // compute d parameter
+  float d = glm::dot(N, v0);
+
+  // compute t
+  t = (dot(N, eye) + d) / NdotRayDir;
+  // check if the triangle is behind the ray
+  if (t < 0) return new Intersection();
+
+  // compute the intersection point
+  glm::vec3 P = eye + t * ray;
+
+  // Step 2: inside-outside test
+  glm::vec3 C;  // vector perpendicular to triangle's plane
+
+  // edge 0
+  glm::vec3 edge0 = v1 - v0;
+  glm::vec3 vp0 = P - v0;
+  C = glm::cross(edge0, vp0);
+  if (glm::dot(N, C) < 0) return new Intersection(); // P is on the right side
+
+  // edge 1
+  glm::vec3 edge1 = v2 - v1;
+  glm::vec3 vp1 = P - v1;
+  C = glm::cross(edge1, vp1);
+  if (glm::dot(N, C) < 0) return new Intersection(); // P is on the right side
+
+  // edge 2
+  glm::vec3 edge2 = v0 - v2;
+  glm::vec3 vp2 = P - v2;
+  C = glm::cross(edge2, vp2);
+  if (glm::dot(N, C) < 0) return new Intersection(); // P is on the right side
+
+  return new Intersection(true, t, P, N);
 }
 
 Intersection* Mesh::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {

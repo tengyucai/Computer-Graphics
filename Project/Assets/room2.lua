@@ -4,7 +4,7 @@ red = gr.material({0.9, 0.1, 0.1}, {0.0, 0.0, 0.0}, 0, 0, 0)
 blue = gr.material({0.2, 0.2, 0.9}, {0.0, 0.0, 0.0}, 0, 0, 0)
 mat3 = gr.material({0.2, 0.2, 0.2}, {0.2, 0.2, 0.2}, 25, 0.8, 1.85) -- glass
 mat4 = gr.material({0.35, 0.35, 0.4}, {0.6, 0.7, 0.6}, 25, 0, 0)
-mat1 = gr.material({0.05, 0.05, 0.15}, {0.01, 0.01, 0.05}, 25, 0.95, 1) -- water
+mat1 = gr.material({0.05, 0.05, 0.15}, {0.01, 0.01, 0.05}, 25, 0.95, 1.3) -- water
 
 scene = gr.node('root')
 
@@ -64,7 +64,7 @@ s2:set_material(mat4)
 -- scene:add_child(csg)
 
 
-white_light = gr.light({0, 0.48, 0.0}, {0.6, 0.6, 0.6}, {1, 0, 0}, 10000)
+white_light = gr.light({0, 0.5, 0.0}, {0.6, 0.6, 0.6}, {1, 0, 0}, 10000)
 
 gr.render(scene, 'test.png', 256, 256,
 	  {0, 0, 1.5}, {0, 0, -1}, {0, 1, 0}, 50,

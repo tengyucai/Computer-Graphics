@@ -69,38 +69,91 @@ std::ostream& operator<<(std::ostream& out, const Mesh& mesh)
   return out;
 }
 
+// Intersection* Mesh::rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &ray, 
+//     const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2) {
+//   glm::vec3 e1, e2, h, s, q;
+//   float a, f, u, v, t;
+
+//   e1 = v1 - v0;
+//   e2 = v2 - v0;
+
+//   h = glm::cross(ray, e2);
+//   a = glm::dot(e1, h);
+
+//   if (a > -kEpsilon && a < kEpsilon) return new Intersection();
+
+//   f = 1 / a;
+//   s = eye - v0;
+//   u = f * glm::dot(s, h);
+
+//   if (u < 0.0 || u > 1.0) return new Intersection();
+
+//   q = glm::cross(s, e1);
+//   v = f * glm::dot(ray, q);
+
+//   if (v < 0.0 || u + v > 1.0) return new Intersection();
+
+//   t = f * glm::dot(e2, q);
+
+//   if (t < kEpsilon) return new Intersection();
+//   else {
+//     glm::vec3 point = eye + t * ray;
+//     glm::vec3 normal = glm::cross(e1, e2);
+//     return new Intersection(true, t, point, normal);
+//   }
+// }
+
 Intersection* Mesh::rayTriangleIntersect(const glm::vec3 &eye, const glm::vec3 &ray, 
     const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2) {
-  glm::vec3 e1, e2, h, s, q;
+  glm::vec3 e1, e2, h, s, q, normal;
   float a, f, u, v, t;
 
-  e1 = v1 - v0;
-  e2 = v2 - v0;
+  // computer plane's normal
+  glm::vec3 v0v1 = v1 - v0;
+  glm::vec3 v0v2 = v2 - v0;
+  // no need t0 normalize
+  glm::vec3 N = glm::cross(v0v1, v0v2);
+  float denom = glm::dot(N, N);
 
-  h = glm::cross(ray, e2);
-  a = glm::dot(e1, h);
+  // Step 1: finding P
 
-  if (a > -kEpsilon && a < kEpsilon) return new Intersection();
+  // check if ray and plane are parallel
+  float NdotRayDir = glm::dot(N, ray);
+  if (fabs(NdotRayDir) < kEpsilon) return new Intersection();  // they are parallel so not intersect
 
-  f = 1 / a;
-  s = eye - v0;
-  u = f * glm::dot(s, h);
+  // compute d parameter
+  float d = glm::dot(N, v0);
 
-  if (u < 0.0 || u > 1.0) return new Intersection();
+  // compute t
+  t = (dot(N, eye) + d) / NdotRayDir;
+  // check if the triangle is behind the ray
+  if (t < 0) return new Intersection();
 
-  q = glm::cross(s, e1);
-  v = f * glm::dot(ray, q);
+  // compute the intersection point
+  glm::vec3 P = eye + t * ray;
 
-  if (v < 0.0 || u + v > 1.0) return new Intersection();
+  // Step 2: inside-outside test
+  glm::vec3 C;  // vector perpendicular to triangle's plane
 
-  t = f * glm::dot(e2, q);
+  // edge 0
+  glm::vec3 edge0 = v1 - v0;
+  glm::vec3 vp0 = P - v0;
+  C = glm::cross(edge0, vp0);
+  if (glm::dot(N, C) < 0) return new Intersection(); // P is on the right side
 
-  if (t < kEpsilon) return new Intersection();
-  else {
-    glm::vec3 point = eye + t * ray;
-    glm::vec3 normal = glm::cross(e1, e2);
-    return new Intersection(true, t, point, normal);
-  }
+  // edge 1
+  glm::vec3 edge1 = v2 - v1;
+  glm::vec3 vp1 = P - v1;
+  C = glm::cross(edge1, vp1);
+  if (glm::dot(N, C) < 0) return new Intersection(); // P is on the right side
+
+  // edge 2
+  glm::vec3 edge2 = v0 - v2;
+  glm::vec3 vp2 = P - v2;
+  C = glm::cross(edge2, vp2);
+  if (glm::dot(N, C) < 0) return new Intersection(); // P is on the right side
+
+  return new Intersection(true, t, P, N);
 }
 
 Intersection* Mesh::intersect(const glm::vec3 &eye, const glm::vec3 &ray) {

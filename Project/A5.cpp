@@ -16,10 +16,14 @@ using namespace glm;
 
 #define kEpsilon 0.001
 #define SAMPLE_SIZE 1
-#define NUM_THREADS 4
+#define NUM_THREADS_PHOTON 4
+#define NUM_THREADS_RENDER 1
 
 mutex pm_mtx;
 mutex pc_mtx;
+mutex image_mtx;
+mutex ic_mtx;
+mutex progress_mtx;
 
 glm::vec3 getLights(
 	SceneNode * root,
@@ -52,7 +56,8 @@ void renderUsingPhotonMap(
 	const glm::vec3 & ambient,
 	const std::list<Light *> & lights,
 	Photon_map *photon_map, 
-	Image &image
+	Image &image,
+	int thread_num
 );
 
 void photonMapping(
@@ -165,6 +170,7 @@ void A5_Render(
 static int emited_photons = 0;
 static int num_photons = 0;
 static double progress = 0;
+static int image_count = 0;
 
 void photonMapping(
 	SceneNode *root,
@@ -179,14 +185,15 @@ void photonMapping(
 	const std::list<Light *> & lights,
 	Photon_map *photon_map
 ) {
-	thread threads[NUM_THREADS];
+	thread threads_photon[NUM_THREADS_PHOTON];
+	thread threads_render[NUM_THREADS_RENDER];
 
 	cout << "Building photon map" << endl;
-	for (int i = 0; i < NUM_THREADS; ++i) {
-		threads[i] = thread(photonTracing, root, photon_map, lights);
+	for (int i = 0; i < NUM_THREADS_PHOTON; ++i) {
+		threads_photon[i] = thread(photonTracing, root, photon_map, ref(lights));
 	}
-	for (int i = 0; i < NUM_THREADS; ++i) {
-		threads[i].join();
+	for (int i = 0; i < NUM_THREADS_PHOTON; ++i) {
+		threads_photon[i].join();
 	}
 	cout << "Scaling photon power" << endl;
 	photon_map->scale_photon_power(double(1) / emited_photons);
@@ -196,25 +203,39 @@ void photonMapping(
 	cout << "Photon map done, num_photons : " << num_photons << " emited_photons : " << emited_photons << endl;
 
 	// photonTracing(root, photon_map, lights);
-	renderUsingPhotonMap(root, eye, view, up, fovy, ambient, lights, photon_map, image);
+	cout << "Start rendering" << endl;
+	cout << "Progress : 0 %" << endl;
+	progress = 0;
+	for (int i = 0; i < NUM_THREADS_RENDER; ++i) {
+		threads_render[i] = thread(renderUsingPhotonMap, root, ref(eye), ref(view), ref(up), fovy, ref(ambient), ref(lights), photon_map, ref(image), i);
+	}
+	for (int i = 0; i < NUM_THREADS_RENDER; ++i) {
+		threads_render[i].join();
+	}
+	cout << "Done rendering!" << endl;
+	// renderUsingPhotonMap(root, eye, view, up, fovy, ambient, lights, photon_map, image);
 }
 
 // Assume single point light source for now
 void photonTracing(SceneNode *root, Photon_map *photon_map, const list<Light *> &lights) {
 	vec3 orig;
 	vec3 dir;
-	int num_photons_per_light = 100000000;
+	int num_photons_per_light = 1000000;
 	
 	for (Light *light : lights) {
 		double x, y, z;
 		num_photons = 0;
 		while (num_photons < num_photons_per_light) {
+			// Origin
+			double origin_x = (((double) rand() / (RAND_MAX)) - 0.5) * 0.1;
+			double origin_z = (((double) rand() / (RAND_MAX)) - 0.5) * 0.1;
+			orig = light->position + vec3(origin_x, -kEpsilon, origin_z);
+			// Direction
 			do {
 				x = ((double) rand() / (RAND_MAX)) * 2 - 1;
 				y = ((double) rand() / (RAND_MAX)) * 2 - 1;
 				z = ((double) rand() / (RAND_MAX)) * 2 - 1;
 			} while (x*x + y*y + z*z > 1.0);
-			orig = light->position;
 			dir = normalize(vec3(x, y, z));
 			// cout << to_string(dir) << endl;
 			vec3 power = glm::vec3(4, 4, 4);//glm::vec3(1000000, 1000000, 1000000);// light->power * light->colour;
@@ -226,9 +247,9 @@ void photonTracing(SceneNode *root, Photon_map *photon_map, const list<Light *> 
 				++emited_photons;
 			pc_mtx.unlock();
 			if (double(num_photons) / num_photons_per_light * 100 >= (progress + 0.1)) {
-				pc_mtx.lock();
+				progress_mtx.lock();
 					progress += 0.1;
-				pc_mtx.unlock();
+				progress_mtx.unlock();
 				cout << "Progress : " << progress << " %" << endl;
 			}
 		}
@@ -318,23 +339,24 @@ void renderUsingPhotonMap(
 	const glm::vec3 & ambient,
 	const std::list<Light *> & lights,
 	Photon_map *photon_map, 
-	Image &image
+	Image &image,
+	int thread_num
 ) {
-	size_t h = image.height();
-	size_t w = image.width();
+	int h = image.height();
+	int w = image.width();
 
 	vec3 m_view = normalize(view);
 	vec3 m_up = normalize(up);
 	vec3 m_side = normalize(cross(m_view, m_up));
 
-	int progress = 0;
-	cout << "Progress : " << progress << " %" << endl;
-	for (uint y = 0; y < h; ++y) {
-		for (uint x = 0; x < w; ++x) {
+	int size_per_thread = h / NUM_THREADS_RENDER;
+
+	for (uint image_y = thread_num * size_per_thread; image_y < (thread_num+1)*size_per_thread && image_y < h; ++image_y) {
+		for (uint image_x = 0; image_x < w; ++image_x) {
 
 			vec3 colour = vec3(0, 0, 0);
-			vec3 ray = m_view + (-1 + (x + 0.5f) / double(w) * 2) * tan(glm::radians(fovy / 2)) * double(w) / double(h) * m_side
-							+ (-1 + (y + 0.5f) / double(h) * 2) * tan(glm::radians(fovy / 2)) * -m_up;
+			vec3 ray = m_view + (-1 + (image_x + 0.5f) / double(w) * 2) * tan(glm::radians(fovy / 2)) * double(w) / double(h) * m_side
+							+ (-1 + (image_y + 0.5f) / double(h) * 2) * tan(glm::radians(fovy / 2)) * -m_up;
 			ray = glm::normalize(ray);
 
 			// Intersection *intersection = root->intersect(glm::vec4(eye, 1), glm::vec4(ray, 0));
@@ -355,19 +377,30 @@ void renderUsingPhotonMap(
 			if (traceScene(root, eye, ray, photon_map, colour, 0)) {
 				// cout << to_string(colour) << endl;
 				// cout << colour.x << " " << colour.y << " " << colour.z << endl;
-				image(x, y, 0) = colour.x;
-				image(x, y, 1) = colour.y;
-				image(x, y, 2) = colour.z;
+				image_mtx.lock();
+					image(image_x, image_y, 0) = colour.x;
+					image(image_x, image_y, 1) = colour.y;
+					image(image_x, image_y, 2) = colour.z;
+				image_mtx.unlock();
 			} else {
-				image(x, y, 0) = 0;
-				image(x, y, 1) = 0;
-				image(x, y, 2) = float(x) / h;
+				image_mtx.lock();
+					image(image_x, image_y, 0) = 0;
+					image(image_x, image_y, 1) = 0;
+					image(image_x, image_y, 2) = float(image_x) / h;
+				image_mtx.unlock();
 			}
 
-			if (double(y * w + x + 1) / (h * w) * 100 >= (progress + 5)) {
-				progress += 5;
-				cout << "Progress : " << progress << " %" << endl;
-			}
+			ic_mtx.lock();
+				++image_count;
+			ic_mtx.unlock();
+			cout << "Progress : " << double(image_count) / (h * w) * 100 << " %" << endl;
+
+			// if (double(image_count) / (h * w) * 100 >= (progress + 1)) {
+			// 	progress_mtx.lock();
+			// 		progress += 1;
+			// 		cout << "Progress : " << progress << " %" << endl;
+			// 	progress_mtx.unlock();
+			// }
 		}
 	}
 }
@@ -386,7 +419,9 @@ bool traceScene(SceneNode *root, vec3 orig, vec3 dir, Photon_map *photon_map, ve
 			float irrad[3] = { 0, 0, 0 };
 			float pos[3] = { intersection->point.x, intersection->point.y, intersection->point.z };
 			float normal[3] = { intersection->normal.x, intersection->normal.y, intersection->normal.z };
-			photon_map->irradiance_estimate(irrad, pos, normal, 0.1f, 1000);
+			pm_mtx.lock();
+				photon_map->irradiance_estimate(irrad, pos, normal, 0.2f, 5000);
+			pm_mtx.unlock();
 			// cout << irrad[0] << " " << irrad[1] << " " << irrad[2] << endl;
 			colour += vec3(irrad[0], irrad[1], irrad[2]) * (1 - material->getTransparency());
 		}
