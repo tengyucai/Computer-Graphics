@@ -30,6 +30,8 @@ private:
 	BoundedBox *b_box;
 	std::vector<glm::vec3> m_vertices;
 	std::vector<Triangle> m_faces;
+	std::vector<Triangle> m_face_normals;
+	std::vector<std::pair<double, double> > m_vts;
 	bool is_plane;
 
     friend std::ostream& operator<<(std::ostream& out, const Mesh& mesh);

@@ -10,12 +10,13 @@ public:
   bool inside;
   glm::vec3 point;
   glm::vec3 normal;
+  glm::vec2 uv;
   Material *material;
   float t;
   Intersection()
-    : hit(false), inside(false), point(glm::vec3()), normal(glm::vec3()), material(NULL), t(0) {}
+    : hit(false), inside(false), point(glm::vec3()), normal(glm::vec3()), uv(glm::vec2()), material(NULL), t(0) {}
   Intersection(bool hit, float t, glm::vec3 point, glm::vec3 normal)
-    : hit(hit), t(t), inside(false), point(point), normal(normal), material(NULL) {}
+    : hit(hit), t(t), inside(false), point(point), normal(normal), uv(glm::vec2()), material(NULL) {}
 };
 
 class Primitive {

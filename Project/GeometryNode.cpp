@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <glm/ext.hpp>
+#include "PhongMaterial.hpp"
 
 //---------------------------------------------------------------------------------------
 GeometryNode::GeometryNode(
@@ -34,7 +35,14 @@ Intersection* GeometryNode::intersect(const glm::vec4 &eye, const glm::vec4 &ray
 	//return m_primitive->intersect(glm::vec3(eye), glm::vec3(ray));
 	intersection->material = m_material;
 	intersection->point = glm::vec3(trans * glm::vec4(intersection->point, 1));
-	intersection->normal = glm::vec3(glm::transpose(invtrans) * glm::vec4(intersection->normal, 0));
+	PhongMaterial *material = (PhongMaterial *)m_material;
+	glm::vec3 normal = intersection->normal;
+	if (intersection->hit) {
+		// std::cout << "point " << glm::to_string(intersection->point) << std::endl;
+		// std::cout << "normal " << glm::to_string(intersection->normal) << std::endl;
+		material->normalMap(intersection->uv.x, intersection->uv.y, normal);
+	}
+	intersection->normal = glm::vec3(glm::transpose(invtrans) * glm::vec4(normal, 0));
 	// if (intersection->hit) std::cout << glm::to_string(intersection->normal) << std::endl;
 	return intersection;
 }

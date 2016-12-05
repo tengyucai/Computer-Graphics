@@ -98,17 +98,44 @@ Intersection* BoundedBox::intersect(const glm::vec3 &eye, const glm::vec3 &ray) 
 	if (tmin > tmax || (tmin < kEpsilon && tmax < kEpsilon)) return new Intersection();
 	else if (tmin < kEpsilon) tmin = tmax;
 
-	glm::vec3 normal;
-	if (tmin > txmin - kEpsilon && tmin < txmin + kEpsilon) normal = glm::vec3(1, 0, 0) * (2 * sign[0] - 1);
-	if (tmin > txmax - kEpsilon && tmin < txmax + kEpsilon) normal = glm::vec3(-1, 0, 0) * (2 * sign[0] - 1);
-	if (tmin > tymin - kEpsilon && tmin < tymin + kEpsilon) normal = glm::vec3(0, 1, 0) * (2 * sign[1] - 1);
-	if (tmin > tymax - kEpsilon && tmin < tymax + kEpsilon) normal = glm::vec3(0, -1, 0) * (2 * sign[1] - 1);
-	if (tmin > tzmin - kEpsilon && tmin < tzmin + kEpsilon) normal = glm::vec3(0, 0, 1) * (2 * sign[2] - 1);
-	if (tmin > tzmax - kEpsilon && tmin < tzmax + kEpsilon) normal = glm::vec3(0, 0, -1) * (2 * sign[2] - 1);
-
 	glm::vec3 point = eye + tmin * ray;
+	glm::vec3 normal;
+	double u, v;
+	if (tmin > txmin - kEpsilon && tmin < txmin + kEpsilon) {
+		normal = glm::vec3(1, 0, 0) * (2 * sign[0] - 1);
+		u = point.z;
+		v = point.y;
+	} 
+	if (tmin > txmax - kEpsilon && tmin < txmax + kEpsilon) {
+		normal = glm::vec3(-1, 0, 0) * (2 * sign[0] - 1);
+		u = point.z;
+		v = point.y;
+	}
+	if (tmin > tymin - kEpsilon && tmin < tymin + kEpsilon) {
+		normal = glm::vec3(0, 1, 0) * (2 * sign[1] - 1);
+		u = point.x;
+		v = point.z;
+	}
+	if (tmin > tymax - kEpsilon && tmin < tymax + kEpsilon) {
+		normal = glm::vec3(0, -1, 0) * (2 * sign[1] - 1);
+		u = point.x;
+		v = point.z;
+	}
+	if (tmin > tzmin - kEpsilon && tmin < tzmin + kEpsilon) {
+		normal = glm::vec3(0, 0, 1) * (2 * sign[2] - 1);
+		u = point.x;
+		v = point.y;
+	}
+	if (tmin > tzmax - kEpsilon && tmin < tzmax + kEpsilon) {
+		normal = glm::vec3(0, 0, -1) * (2 * sign[2] - 1);
+		u = point.x;
+		v = point.y;
+	}
+	// std::cout << glm::to_string(glm::vec2(u, v)) << std::endl;
 
-	return new Intersection(true, tmin, point, normal);
+	Intersection *intersection = new Intersection(true, tmin, point, normal);
+	intersection->uv = glm::vec2(u, v);
+	return intersection;
 }
 
 NonhierBox::~NonhierBox()

@@ -3,11 +3,12 @@
 #include <glm/glm.hpp>
 
 #include "Material.hpp"
+#include "PerlinNoise.hpp"
 
 class PhongMaterial : public Material {
 public:
   PhongMaterial(const glm::vec3& kd, const glm::vec3& ks, double shininess,
-  	double transparency, double refraction_index);
+  	double transparency, double refraction_index, double bumpness);
   virtual ~PhongMaterial();
 
 private:
@@ -17,6 +18,9 @@ private:
   double m_shininess;
   double m_transparency;
   double m_refraction_index;
+  double m_bumpness;
+
+  PerlinNoise *m_perlin;
 
 public:
 	bool isDiffuse();
@@ -28,4 +32,7 @@ public:
 	double getShininess();
 	double getTransparency();
 	double getRefractionIndex();
+	double getBumpness();
+	PerlinNoise *getpn();
+	glm::vec3 bump(glm::vec3 n, glm::vec3 point);
 };

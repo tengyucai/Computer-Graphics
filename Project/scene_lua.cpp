@@ -464,6 +464,8 @@ extern "C"
 int gr_material_cmd(lua_State* L)
 {
   GRLUA_DEBUG_CALL;
+
+  int n = lua_gettop(L);
   
   gr_material_ud* data = (gr_material_ud*)lua_newuserdata(L, sizeof(gr_material_ud));
   data->material = 0;
@@ -475,12 +477,27 @@ int gr_material_cmd(lua_State* L)
   double shininess = luaL_checknumber(L, 3);
   double transparency = luaL_checknumber(L, 4);
   double refraction_index = luaL_checknumber(L, 5);
+  double bumpness = luaL_checknumber(L, 6);
+  std::string texture_fname;
+  std::string normal_fname;
+
+  if (n >= 7) {
+    const char* texture_name = luaL_checkstring(L, 7);
+    texture_fname = std::string(texture_name);
+    if (n == 8) {
+      const char* normal_name = luaL_checkstring(L, 8);
+      normal_fname = std::string(normal_name);
+    }
+  }
   
   data->material = new PhongMaterial(glm::vec3(kd[0], kd[1], kd[2]),
                                      glm::vec3(ks[0], ks[1], ks[2]),
                                      shininess,
                                      transparency,
-                                     refraction_index);
+                                     refraction_index,
+                                     bumpness,
+                                     texture_fname,
+                                     normal_fname);
 
   luaL_newmetatable(L, "gr.material");
   lua_setmetatable(L, -2);

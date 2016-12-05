@@ -139,8 +139,7 @@ glm::vec3 getLights(
 	eye = eye + kEpsilon * dir;
 	Intersection *intersection = root->intersect(glm::vec4(eye, 1), glm::vec4(dir, 0));
 
-	if (intersection != NULL && intersection->hit) {
-	
+	if (intersection != NULL && intersection->hit) {	
 		PhongMaterial *material = (PhongMaterial*)intersection->material;
 
 		r += ambient.x * material->getkd().x;
@@ -151,10 +150,11 @@ glm::vec3 getLights(
 			float falloff = light->falloff[0] + light->falloff[1] * distance + light->falloff[2] * distance * distance;
 			glm::vec3 intensity = light->colour / falloff;
 
-			glm::vec3 normal = glm::normalize(intersection->normal);
+			glm::vec3 normal = glm::normalize(material->bump(intersection->normal, intersection->point));
 			glm::vec3 l = glm::normalize(light->position - intersection->point);
 
 			if (glm::dot(normal, l) > -kEpsilon) {
+				// std::cout << "in" << std::endl;
 				vec3 p = intersection->point + kEpsilon * l;
 				Intersection *s_intersection = root->intersect(glm::vec4(p, 1), glm::vec4(l, 0));
 
