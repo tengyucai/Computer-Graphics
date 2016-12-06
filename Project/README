@@ -1,0 +1,61 @@
+Final Project
+
+Name:		Tengyu Cai
+Student #: 	20494373
+Student id: t7cai
+
+The final executable was compiled on machine gl02
+
+
+## Compilation
+Run the following commands to compile the program:
+	$ premake4 gmake
+	$ make
+
+Run the following command to invoke the program:
+	$ ./A5 Assets/<lua_file_name> [-NUM_P_THREADS p] [-NUM_R_THREADS r] [-SAMPLE_SIZE n]
+
+  (Note: need to run the program in A5 directory and pass the lua file with "Assets/" as prefix)
+* [] means optional
+* -NUM_P_THREADS p : p threads used for tracing photons, default is 4
+* -NUM_R_THREADS r : r threads used for rendering the scene, default is 2
+* -SAMPLE_SIZE n   : n samples per pixel, if set to 1, then anti-alaising is disabled, default is 1
+
+
+## Manual
+# New Lua Commands:
+1. gr.cylinder(<name>): Create a cylinder with centre (0,0,0), radius 1 and height 1.
+
+2. gr.union(<name>, n1, n2): Create a CSG union node with node n1 and node n2.
+
+3. gr.intersection(<name>, n1, n2): Create a CSG intersection node with node n1 and node n2.
+
+4. gr.difference(<name>, n1, n2): Create a CSG difference node with node n1 and node n2 (n1 - n2).
+
+5. gr.light({x,y,z}, {r,g,b}, {c0,c1,c2}, p, num photons): Create a point light source located at (x, y, z) with intensity (r, g, b), quadratic attenuation parameters c0, c1 and c2 and power p. num photons indicates the total number of photons that will be emitted from this light source.
+
+6. gr.material({dr, dg, db}, {sr, sg, sb}, p, t, r, s, <texture>, <bump>): Return a material with diffuse reflection coefficients dr, dg, db, specular reflection coefficients sr, sg, sb, and Phong coefficient p. The newly added fields are transparency t and refractive index r of the ma-terial. The Perlin Noise scale s can add some Perlin Noise to the surface of this material. Also, by providing the path to the texture image and/or bump image, the material can be render with a texture and/or bumpy surface.
+
+
+# Sample scene:
+A cornell box with rocky floor & tiled wall and with about 2/5 of the space filling up with clear water.
+A transparent glass ball, a reflective silver ball and a medal ring under the water along with the water surface are showing different patterns of reflection, refraction and caustics.
+
+
+## Objectives:
+1. Extra Primitives - Cylinder  (done)
+2. Constructive Solid Geometry  (done)
+3. Texture Mapping  (done)
+4. Bump Mapping  (done)
+5. Photon Mapping  (done)
+6. Caustics  (done)
+7. Diffuse Interreflection / Global illumination  (done)
+8. Adaptive Anti-aliasing  (done)
+9. Soft Shadow  (done)
+10. Final Scene  (done)
+
+Extra features are as followed:
+11. Perlin Noise 
+12. Multi-threading
+13. Refraction
+14. Area Light Source

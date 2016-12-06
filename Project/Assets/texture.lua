@@ -19,7 +19,7 @@ back:translate(-0.5, -0.5, -1.5)
 
 buttom = gr.cube('buttom')
 scene:add_child(buttom)
-buttom:set_material(grass)
+buttom:set_material(dirt)
 buttom:translate(-0.5, -1.5, -0.5)
 
 top = gr.cube('top')
@@ -29,12 +29,12 @@ top:translate(-0.5, 0.5, -0.5)
 
 right = gr.cube('right')
 scene:add_child(right)
-right:set_material(brick)
+right:set_material(blue)
 right:translate(0.5, -0.5, -0.5)
 
 left = gr.cube('left')
 scene:add_child(left)
-left:set_material(brick)
+left:set_material(red)
 left:translate(-1.5, -0.5, -0.5)
 
 white_light = gr.light({0, 0.5, 0.0}, {0.75, 0.75, 0.75}, {1, 0, 0}, 3, 1000000)

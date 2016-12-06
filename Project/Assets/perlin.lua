@@ -37,9 +37,9 @@ scene:add_child(left)
 left:set_material(red)
 left:translate(-1.5, -0.5, -0.5)
 
-white_light = gr.light({0, 0.5, 0.0}, {0.75, 0.75, 0.75}, {1, 0, 0}, 3, 1000000)
+white_light = gr.light({0, 0.5, 0.0}, {0.75, 0.75, 0.75}, {1, 0, 0}, 3, 10000000)
 
-gr.render(scene, 'perlin.png', 256, 256,
+gr.render(scene, 'perlin.png', 512, 512,
 	  {0, 0, 1.5}, {0, 0, -1}, {0, 1, 0}, 50,
 	  {0.3, 0.3, 0.3}, {white_light})
 

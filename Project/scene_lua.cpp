@@ -59,6 +59,8 @@
 typedef std::map<std::string,Mesh*> MeshMap;
 static MeshMap mesh_map;
 
+Settings *settings;
+
 // Uncomment the following line to enable debugging messages
 // #define GRLUA_ENABLE_DEBUG
 
@@ -457,7 +459,7 @@ int gr_render_cmd(lua_State* L)
   }
 
   Image im( width, height);
-  A5_Render(root->node, im, eye, view, up, fov, ambient, lights);
+  A5_Render(root->node, im, eye, view, up, fov, ambient, lights, settings);
     im.savePng( filename );
 
   return 0;
@@ -691,9 +693,11 @@ static const luaL_Reg grlib_node_methods[] = {
 
 // This function calls the lua interpreter to define the scene and
 // raytrace it as appropriate.
-bool run_lua(const std::string& filename)
+bool run_lua(const std::string& filename, Settings *s)
 {
   GRLUA_DEBUG("Importing scene from " << filename);
+
+  settings = s;
   
   // Start a lua interpreter
   lua_State* L = luaL_newstate();

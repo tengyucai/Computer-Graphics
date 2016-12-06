@@ -38,6 +38,10 @@ left:set_material(red)
 left:translate(-1.5, -0.5, -0.5)
 
 cylinder1 = gr.cylinder('cylinder')
+scene:add_child(cylinder1)
+cylinder1:scale(0.1, 0.1, 0.1)
+cylinder1:rotate('X', 30)
+cylinder1:translate(0, -0.1, 0)
 cylinder1:set_material(red)
 
 white_light = gr.light({0, 0.5, 0.0}, {0.75, 0.75, 0.75}, {1, 0, 0}, 3, 1000000)

@@ -16,15 +16,14 @@ using namespace std;
 using namespace glm;
 
 #define kEpsilon 0.001
-#define SAMPLE_SIZE 2
-#define NUM_THREADS_PHOTON 4
-#define NUM_THREADS_RENDER 2
 
 mutex pm_mtx;
 mutex pc_mtx;
 mutex image_mtx;
 mutex ic_mtx;
 mutex progress_mtx;
+
+Settings *setting;
 
 glm::vec3 getLights(
 	SceneNode * root,
@@ -92,7 +91,8 @@ void A5_Render(
 
 		// Lighting parameters
 		const glm::vec3 & ambient,
-		const std::list<Light *> & lights
+		const std::list<Light *> & lights,
+		Settings *s
 ) {
 
   // Fill in raytracing code here...
@@ -112,6 +112,9 @@ void A5_Render(
 	}
 	std::cout << "\t}" << std::endl;
 	std::cout <<")" << std::endl;
+
+	setting = s;
+	cout << "Sample size : " << setting->sample_size << endl;
 
 	// Photon mapping
 	Photon_map *m_photon_map = new Photon_map(200000000);
@@ -136,14 +139,15 @@ void photonMapping(
 	const std::list<Light *> & lights,
 	Photon_map *photon_map
 ) {
-	thread threads_photon[NUM_THREADS_PHOTON];
-	thread threads_render[NUM_THREADS_RENDER];
+	thread threads_photon[setting->num_threads_photon];
+	thread threads_render[setting->num_threads_render];
 
 	cout << "Building photon map" << endl;
-	for (int i = 0; i < NUM_THREADS_PHOTON; ++i) {
+	cout << "num of threads : " << setting->num_threads_photon << endl;
+	for (int i = 0; i < setting->num_threads_photon; ++i) {
 		threads_photon[i] = thread(photonTracing, root, photon_map, ref(lights));
 	}
-	for (int i = 0; i < NUM_THREADS_PHOTON; ++i) {
+	for (int i = 0; i < setting->num_threads_photon; ++i) {
 		threads_photon[i].join();
 	}
 	cout << "Scaling photon power" << endl;
@@ -155,12 +159,13 @@ void photonMapping(
 
 	// photonTracing(root, photon_map, lights);
 	cout << "Start rendering" << endl;
+	cout << "num of threads : " << setting->num_threads_render << endl;
 	cout << "Progress : 0 %" << endl;
 	progress = 0;
-	for (int i = 0; i < NUM_THREADS_RENDER; ++i) {
+	for (int i = 0; i < setting->num_threads_render; ++i) {
 		threads_render[i] = thread(renderUsingPhotonMap, root, ref(eye), ref(view), ref(up), fovy, ref(ambient), ref(lights), photon_map, ref(image), i);
 	}
-	for (int i = 0; i < NUM_THREADS_RENDER; ++i) {
+	for (int i = 0; i < setting->num_threads_render; ++i) {
 		threads_render[i].join();
 	}
 	cout << "Done rendering!" << endl;
@@ -303,18 +308,18 @@ void renderUsingPhotonMap(
 	vec3 m_up = normalize(up);
 	vec3 m_side = normalize(cross(m_view, m_up));
 
-	int size_per_thread = h / NUM_THREADS_RENDER;
+	int size_per_thread = h / setting->num_threads_render;
 
 	for (uint image_y = thread_num * size_per_thread; image_y < (thread_num+1)*size_per_thread && image_y < h; ++image_y) {
 		for (uint image_x = 0; image_x < w; ++image_x) {
 			bool under_water = double(image_y) / h >= 0.6;
 			vec3 colour = vec3(0, 0, 0);
 			vector<vec3> colours;
-			for (int i = 0; i < SAMPLE_SIZE; ++i) {
-				for (int j = 0; j < SAMPLE_SIZE; ++j) {
+			for (int i = 0; i < setting->sample_size; ++i) {
+				for (int j = 0; j < setting->sample_size; ++j) {
 			
-					vec3 ray = m_view + (-1 + (image_x + double(i) / SAMPLE_SIZE) / double(w) * 2) * tan(glm::radians(fovy / 2)) * double(w) / double(h) * m_side
-									+ (-1 + (image_y + double(j) / SAMPLE_SIZE) / double(h) * 2) * tan(glm::radians(fovy / 2)) * -m_up;
+					vec3 ray = m_view + (-1 + (image_x + double(i) / setting->sample_size) / double(w) * 2) * tan(glm::radians(fovy / 2)) * double(w) / double(h) * m_side
+									+ (-1 + (image_y + double(j) / setting->sample_size) / double(h) * 2) * tan(glm::radians(fovy / 2)) * -m_up;
 					ray = glm::normalize(ray);
 
 					// Intersection *intersection = root->intersect(glm::vec4(eye, 1), glm::vec4(ray, 0));
@@ -355,7 +360,7 @@ void renderUsingPhotonMap(
 				}
 				colour /= colours.size();
 			} else {
-				for (int i = 0; i < SAMPLE_SIZE*SAMPLE_SIZE; ++i) {
+				for (int i = 0; i < setting->sample_size*setting->sample_size; ++i) {
 					double ksi1 = ((double) rand() / (RAND_MAX));
 					double ksi2 = ((double) rand() / (RAND_MAX));
 					vec3 ray = m_view + (-1 + (image_x + ksi1) / double(w) * 2) * tan(glm::radians(fovy / 2)) * double(w) / double(h) * m_side
