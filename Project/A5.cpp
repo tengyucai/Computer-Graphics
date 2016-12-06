@@ -16,7 +16,7 @@ using namespace std;
 using namespace glm;
 
 #define kEpsilon 0.001
-#define SAMPLE_SIZE 3
+#define SAMPLE_SIZE 2
 #define NUM_THREADS_PHOTON 4
 #define NUM_THREADS_RENDER 2
 
@@ -113,60 +113,9 @@ void A5_Render(
 	std::cout << "\t}" << std::endl;
 	std::cout <<")" << std::endl;
 
-	// { // ray tracing
-	// 	size_t h = image.height();
-	// 	size_t w = image.width();
-
-	// 	glm::vec3 m_view = glm::normalize(view);
-	// 	glm::vec3 m_up = glm::normalize(up);
-	// 	glm::vec3 m_side = glm::normalize(glm::cross(m_view, m_up));
-
-	// 	int progress = 0;
-	// 	std::cout << "Progress : " << progress << " %" << std::endl;
-	// 	for (uint y = 0; y < h; ++y) {
-	// 		for (uint x = 0; x < w; ++x) {
-
-	// 			glm::vec3 c = glm::vec3(0, 0, 0);
-	// 			for (int i = 0; i < SAMPLE_SIZE; ++i) {
-	// 				for (int j = 0; j < SAMPLE_SIZE; ++j) {
-	// 					glm::vec3 ray = m_view + (-1 + (x + 0.2 + i*0.3) / double(w) * 2) * tan(glm::radians(fovy / 2)) * double(w) / double(h) * m_side
-	// 										+ (-1 + (y + 0.2 + j*0.3) / double(h) * 2) * tan(glm::radians(fovy / 2)) * -m_up;
-	// 					ray = glm::normalize(ray);
-
-	// 					Intersection *intersection = root->intersect(glm::vec4(eye, 1), glm::vec4(ray, 0));
-
-	// 					if (intersection != NULL && intersection->hit) {
-
-	// 						glm::vec3 colour = getLights(root, lights, ambient, eye, -1.0*ray, intersection, 3);
-
-	// 						c += colour;
-	// 					}
-
-	// 					delete intersection;
-	// 				}
-	// 			}
-	// 			image(x, y, 0) = c.x / (SAMPLE_SIZE * SAMPLE_SIZE);
-	// 			image(x, y, 1) = c.y / (SAMPLE_SIZE * SAMPLE_SIZE);
-	// 			image(x, y, 2) = c.z / (SAMPLE_SIZE * SAMPLE_SIZE);
-
-	// 			if (double(y * w + x + 1) / (h * w) * 100 >= (progress + 5)) {
-	// 				progress += 5;
-	// 				std::cout << "Progress : " << progress << " %" << std::endl;
-	// 			}
-	// 		}
-	// 	}
-	// }
-
 	// Photon mapping
 	Photon_map *m_photon_map = new Photon_map(200000000);
 	photonMapping(root, image, eye, view, up, fovy, ambient, lights, m_photon_map);
-	// vec3 normal = vec3(0, 1, 0);
-	// vec3 dir = vec3(2, -1, 0);
-	// for (int i = 0; i < 1000; ++i) {
-	// 	vec3 refraction = getRandomDiffuseReflectionRay(normal);
-	// 	cout << to_string(refraction) << endl;
-	// 	image((refraction.x + 1)*128, (refraction.z+1)*128, 0) = 1;
-	// }
 }
 
 static int emited_photons = 0;
@@ -222,10 +171,10 @@ void photonMapping(
 void photonTracing(SceneNode *root, Photon_map *photon_map, const list<Light *> &lights) {
 	vec3 orig;
 	vec3 dir;
-	int num_photons_per_light = 100000000;
 	
 	for (Light *light : lights) {
 		double x, y, z;
+		int num_photons_per_light = light->num_photons;
 		num_photons = 0;
 		while (emited_photons < num_photons_per_light) {
 			// Origin
@@ -240,7 +189,7 @@ void photonTracing(SceneNode *root, Photon_map *photon_map, const list<Light *> 
 			} while (x*x + y*y + z*z > 1.0);
 			dir = normalize(vec3(x, y, z));
 			// cout << to_string(dir) << endl;
-			vec3 power = glm::vec3(2.2, 2.2, 2.2);//glm::vec3(1000000, 1000000, 1000000);// light->power * light->colour;
+			vec3 power = light->power * light->colour;
 			int photons = tracePhoton(root, orig, dir, photon_map, power, 0, false);
 			pc_mtx.lock();
 				num_photons += photons;
@@ -358,7 +307,7 @@ void renderUsingPhotonMap(
 
 	for (uint image_y = thread_num * size_per_thread; image_y < (thread_num+1)*size_per_thread && image_y < h; ++image_y) {
 		for (uint image_x = 0; image_x < w; ++image_x) {
-
+			bool under_water = double(image_y) / h >= 0.6;
 			vec3 colour = vec3(0, 0, 0);
 			vector<vec3> colours;
 			for (int i = 0; i < SAMPLE_SIZE; ++i) {
@@ -383,7 +332,6 @@ void renderUsingPhotonMap(
 					// }
 					// delete intersection;
 
-					bool under_water = double(image_y) / h >= 0.6;
 					vec3 c = vec3(0, 0, 0);
 					if (traceScene(root, eye, ray, photon_map, c, 0, under_water)) {
 						// cout << to_string(colour) << endl;
@@ -401,14 +349,29 @@ void renderUsingPhotonMap(
 				}
 			}
 
-			// if (areColoursClose(colours)) {
-			for (int i = 0; i < colours.size(); ++i) {
-				colour += colours[i];
-			}
-			colour /= colours.size();
-			// } else {
+			if (areColoursClose(colours)) {
+				for (int i = 0; i < colours.size(); ++i) {
+					colour += colours[i];
+				}
+				colour /= colours.size();
+			} else {
+				for (int i = 0; i < SAMPLE_SIZE*SAMPLE_SIZE; ++i) {
+					double ksi1 = ((double) rand() / (RAND_MAX));
+					double ksi2 = ((double) rand() / (RAND_MAX));
+					vec3 ray = m_view + (-1 + (image_x + ksi1) / double(w) * 2) * tan(glm::radians(fovy / 2)) * double(w) / double(h) * m_side
+									+ (-1 + (image_y + ksi2) / double(h) * 2) * tan(glm::radians(fovy / 2)) * -m_up;
+					ray = glm::normalize(ray);
+					vec3 c = vec3(0, 0, 0);
+					if (traceScene(root, eye, ray, photon_map, c, 0, under_water)) {
+						colours.push_back(c);
+					}
+				}
+				for (int i = 0; i < colours.size(); ++i) {
+					colour += colours[i];
+				}
+				colour /= colours.size();
 			// 	colour = vec3(1, 0, 0);
-			// }
+			}
 
 			image_mtx.lock();
 				image(image_x, image_y, 0) = colour.x;
@@ -532,15 +495,6 @@ tuple<bool, double, vec3> getRefractionRay(vec3 dir, vec3 normal, double ni, boo
 	double n1, n2;
 	double R = 1.0;
 
-	// if (cosI > 0) { // direction and normal are in same direction, ray from inside primitive
-	// 	n1 = ni;
-	// 	n2 = 1.0;
-	// 	normal = -1 * normal;
-	// } else { // ray from outside of primitive
-	// 	n1 = 1.0;
-	// 	n2 = ni;
-	// 	cosI = -cosI;
-	// }
 	if (!under_water) {
 		under_water = true;
 		n1 = 1.0;
@@ -582,81 +536,12 @@ bool areColoursClose(vector<vec3> &colours) {
 		for (int j = i + 1; j < colours.size(); ++j) {
 			vec3 colour1 = colours[i];
 			vec3 colour2 = colours[j];
-			if (fabs(colour1.x - colour2.x) > 0.2 ||
-				fabs(colour1.y - colour2.y) > 0.2 ||
-				fabs(colour1.z - colour2.z) > 0.2) {
+			if (fabs(colour1.x - colour2.x) > 0.1 ||
+				fabs(colour1.y - colour2.y) > 0.1 ||
+				fabs(colour1.z - colour2.z) > 0.1) {
 				return false;
 			}
 		}
 	}
 	return true;
 }
-
-// glm::vec3 getLights(
-// 	SceneNode * root,
-// 	const std::list<Light *> & lights,
-// 	const glm::vec3 & ambient,
-// 	glm::vec3 eye,
-// 	glm::vec3 view,
-// 	Intersection *intersection,
-// 	int depth) {
-
-// 	float r = 0.0f, g = 0.0f, b = 0.0f;
-// 	PhongMaterial *material = (PhongMaterial*)intersection->material;
-
-// 	r += ambient.x * material->getkd().x;
-// 	g += ambient.y * material->getkd().y;
-// 	b += ambient.z * material->getkd().z;
-// 	for (const Light * light : lights) {
-// 		float distance = glm::length(light->position - intersection->point);
-// 		float falloff = light->falloff[0] + light->falloff[1] * distance + light->falloff[2] * distance * distance;
-// 		glm::vec3 intensity = light->colour / falloff;
-
-// 		glm::vec3 normal = glm::normalize(intersection->normal);
-// 		glm::vec3 l = glm::normalize(light->position - intersection->point);
-
-// 		if (glm::dot(normal, l) > -kEpsilon) {
-// 			Intersection *s_intersection = root->intersect(glm::vec4(intersection->point, 1), glm::vec4(l, 0));
-
-// 			if (s_intersection == NULL || !s_intersection->hit) {
-// 				glm::vec3 diffusion = intensity * material->getkd() * glm::dot(normal, l);
-
-// 				glm::vec3 reflection = 2.0f * glm::dot(normal, l) * normal - l;
-// 				glm::vec3 v = glm::normalize(eye - intersection->point);
-// 				glm::vec3 specular = intensity * material->getks() * pow(glm::dot(reflection, v), material->getShininess());
-
-// 				r += diffusion.x + specular.x;
-// 				g += diffusion.y + specular.y;
-// 				b += diffusion.z + specular.z;
-// 			}
-
-// 			delete s_intersection;
-// 		}
-// 	}
-
-// 	if (--depth > 0) {
-// 		if (material->getShininess() > 0) {
-// 			glm::vec3 normal = glm::normalize(intersection->normal);
-// 			glm::vec3 reflection_view = glm::normalize(2 * glm::dot(view, normal) * normal - view);
-// 			eye = intersection->point + 0.0001 * reflection_view;
-// 			Intersection *new_intersection = root->intersect(glm::vec4(eye, 1), glm::vec4(reflection_view, 0));
-
-// 			if (new_intersection->hit) {
-// 				glm::vec3 reflection = getLights(root, lights, ambient, eye, -1.0*reflection_view, new_intersection, --depth);
-// 				if(material->getShininess() >= 128){// purly reflective
-// 					r = r / 128 + reflection.x;
-// 					g = g / 128 + reflection.y;
-// 					b = b / 128 + reflection.z;
-// 				} else {
-// 					r = r * ((128 - material->getShininess()) / 128) + reflection.x * (material->getShininess() / 128);
-// 					g = g * ((128 - material->getShininess()) / 128) + reflection.y * (material->getShininess() / 128);
-// 					b = b * ((128 - material->getShininess()) / 128) + reflection.z * (material->getShininess() / 128);
-// 				}
-// 			}
-
-// 			delete new_intersection;
-// 		}
-// 	}
-
-// 	return glm::vec3(r, g, b);
-// }

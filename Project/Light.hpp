@@ -12,6 +12,7 @@ struct Light {
   glm::vec3 position;
   double falloff[3];
   double power;
+  double num_photons;
 };
 
 std::ostream& operator<<(std::ostream& out, const Light& l);

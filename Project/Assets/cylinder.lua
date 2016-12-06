@@ -37,56 +37,11 @@ scene:add_child(left)
 left:set_material(red)
 left:translate(-1.5, -0.5, -0.5)
 
--- cylinder1 = gr.cylinder('cylinder')
--- cylinder1:set_material(metal)
+cylinder1 = gr.cylinder('cylinder')
+cylinder1:set_material(red)
 
--- cylinder2 = gr.cylinder('cylinder')
--- cylinder2:set_material(metal)
--- cylinder2:scale(0.97, 0.97, 1.1)
+white_light = gr.light({0, 0.5, 0.0}, {0.75, 0.75, 0.75}, {1, 0, 0}, 3, 1000000)
 
--- ring = gr.difference('difference', cylinder1, cylinder2)
--- scene:add_child(ring)
--- ring:rotate('X', 90)
--- ring:scale(0.1, 0.017, 0.1)
--- ring:translate(-0.1, -0.481, 0.27)
-
-s1 = gr.nh_sphere('s1', {0.3, -0.35, 0.15}, 0.15)
--- s1 = gr.nh_sphere('s1', {0, 0, 0}, 0.15)
-scene:add_child(s1)
-s1:set_material(mat3)
-
--- s2 = gr.nh_sphere('s2', {-0.25, -0.35, -0.25}, 0.15)
--- -- s1 = gr.nh_sphere('s1', {0, 0, 0}, 0.15)
--- scene:add_child(s2)
--- s2:set_material(mat4)
-
--- -- s3 = gr.nh_sphere('s3', {-0.1, -0.25, 0.2}, 0.02)
--- -- -- s1 = gr.nh_sphere('s1', {0, 0, 0}, 0.15)
--- -- scene:add_child(s3)
--- -- s3:set_material(air)
-
--- water = gr.mesh('water', 'Assets/water.obj' )
--- scene:add_child(water)
--- water:translate(0, -0.1, 0)
--- water:set_material(mat1)
-
--- water = gr.mesh('water', 'Assets/water.obj' )
--- scene:add_child(water)
--- water:scale(1.5,1.5,2)
--- water:translate(0, -0.1, 0)
--- water:set_material(mat1)
-
--- cube = gr.cube('cube')
--- cube:set_material(mat3)
--- cube:scale(0.25, 0.25, 0.25)
-
--- csg = gr.union('difference', s1, cube)
--- csg:translate(0.2, -0.3, -0.15)
--- scene:add_child(csg)
-
-
-white_light = gr.light({0, 0.5, 0.0}, {0.7, 0.65, 0.85}, {1, 0, 0}, 3, 1000000)
-
-gr.render(scene, 'test.png', 1024, 1024,
+gr.render(scene, 'cylinder.png', 256, 256,
 	  {0, 0, 1.5}, {0, 0, -1}, {0, 1, 0}, 50,
 	  {0.3, 0.3, 0.3}, {white_light})
